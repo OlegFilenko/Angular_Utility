@@ -28,6 +28,7 @@ namespace Angular_Utility
             Console.WriteLine("\tИмя проекта:\t" + node_.ChildNodes[0].InnerText);
             Console.WriteLine("\tПуть к проекту:\t" + node_.ChildNodes[1].InnerText);
             Console.WriteLine("\tОписание:\t" + node_.ChildNodes[2].InnerText);
+
         }
     }
 }
