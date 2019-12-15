@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Xml;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -55,8 +52,18 @@ namespace Angular_Utility
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
         private static void _generateComponent(string[] params_) {
-            //string lPath = 
-            Console.WriteLine("generate compoent");
+            string lPath = _getParamValue(params_, "path");
+            bool lRouting = _checkParamExists(params_, "routing");
+            Console.WriteLine("path: " + lPath);
+            Console.WriteLine("routing: " + lRouting.ToString());
+            //Console.WriteLine("generate compoent");
+            //Console.WriteLine(string.Join("\n", params_));
+            Console.ReadKey();
+        }
+
+        //------------| RENAME_COMPONENT |-------------------------------------------------------------------------------------
+        private static void _renameComponent(string[] params_) {
+            Console.WriteLine("rename compoent");
             Console.WriteLine(string.Join("\n", params_));
             Console.ReadKey();
         }
@@ -66,6 +73,19 @@ namespace Angular_Utility
             Console.WriteLine("remove compoent");
             Console.WriteLine(string.Join("\n", params_));
             Console.ReadKey();
+        }
+
+        //------------| GET_PARAM_VALUE |-------------------------------------------------------------------------------------
+        private static string _getParamValue(string[] params_, string paramName_) {
+            if(params_.Length == 0) { return ""; }
+            string[] lArr = params_.Where(param => Regex.IsMatch(param, $"^-{paramName_}=\".*\"")).ToArray();
+            string lParam = (lArr.Length > 0) ? lArr[0] : "";
+            return lParam.Replace($"-{paramName_}=\"", "").Replace("\"", "");
+        }
+
+        //------------| CHECK_PARAM_EXISTS |-------------------------------------------------------------------------------------
+        private static bool _checkParamExists(string[] params_, string paramName_) {
+            return Array.Exists(params_, param => Regex.IsMatch(param, $"^--{paramName_}$"));
         }
 
         #endregion
