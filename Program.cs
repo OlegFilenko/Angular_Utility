@@ -1,5 +1,6 @@
 ﻿using Angular_Utility.models;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -25,7 +26,7 @@ namespace Angular_Utility
             settingsStoreService
         }
 
-        private static string[] extensionsArr = {
+        private static string[] _extensionsArr = {
             ".component.ts",
             ".module.ts",
             "-routing.module.ts",
@@ -50,7 +51,6 @@ namespace Angular_Utility
             _projectPath = File.ReadAllLines("Projects")[0];
             _accentMessage(_projectPath);
             _projectPath += "/ClientApp/src/app/";
-            Console.ReadKey();
             _processingRequest();
         }
 
@@ -60,6 +60,7 @@ namespace Angular_Utility
 
         //------------| QUERY_HANDLER |-------------------------------------------------------------------------------------
         private static void _processingRequest() {
+            _accentMessage("Введите запрос");
             string lQuery = Console.ReadLine();
             string[] lQueryPartsArr = lQuery.Split(' ');
 
@@ -71,6 +72,10 @@ namespace Angular_Utility
             } else if(Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)) {
                 return;
             }
+
+            lQuery = null;
+            lQueryPartsArr = null;
+            _processingRequest();
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
@@ -88,39 +93,58 @@ namespace Angular_Utility
             GenerateComponentModel lDataModel = new GenerateComponentModel {
                 path = _checkPath(lPath),
                 name = _checkName(lName, lPath),
-                dilogs = lDialogs.Replace(" ", "").Split(','),
+                dilogs = lDialogs?.Replace(" ", "").Split(','),
                 routing = lRouting,
                 flat = lFlat,
                 abstr = lAbstract,
                 settingStore = lSettingStore
             };
+
+            _generateComponent(lDataModel);
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
         private static void _generateComponent(GenerateComponentModel dataModel_){
+            List<_ng_element> lElements;
             if (dataModel_.flat){
-
-            }else if (dataModel_.abstr){
-
+                lElements = new List<_ng_element>{
+                    _ng_element.component,
+                    _ng_element.html,
+                    _ng_element.style
+                };
+            }
+            else if (dataModel_.abstr){
+                lElements = new List<_ng_element>{
+                    _ng_element.component,
+                };
             } else {
                 dataModel_.path += dataModel_.name + "/";
-                Directory.CreateDirectory(dataModel_.path);
-                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".module.ts")) {
-                }
-                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.ts")) {
-                }
-                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.scss")) {
-                }
-                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.html")) {
-                }
+                Directory.CreateDirectory(_projectPath + dataModel_.path);
+
+                lElements = new List<_ng_element>{ 
+                    _ng_element.module,
+                    _ng_element.component,
+                    _ng_element.html,
+                    _ng_element.style
+                };
+
+                if (dataModel_.routing) { lElements.Add(_ng_element.routinModule); }
+                if (dataModel_.settingStore) { lElements.Add(_ng_element.settingsStoreService); }
+            }
+
+            foreach (_ng_element element in lElements){
+                _createFile(element, dataModel_);
             }
 
             Console.ReadKey();
         }
 
         //------------| CREATE_FILE |-------------------------------------------------------------------------------------
-        private static void _createFile() {
-
+        private static void _createFile(_ng_element element_, GenerateComponentModel dataModel_) {
+            using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_]))
+            {
+                lFileStream.Write(_extensionsArr[(int)element_]);
+            }
         }
 
         //------------| CHECK_NAME |-------------------------------------------------------------------------------------
@@ -147,24 +171,24 @@ namespace Angular_Utility
         //------------| CHECK_PATH |-------------------------------------------------------------------------------------
         private static string _checkPath(string path_) {
             if (path_[0] == '/'){ path_ = path_.Substring(1); }
-            if (path_.[path_.Length - 1] != "/") { path_ += "/"; }
-            if (!Directory.Exists(_projectPath + path_)){
-                _warnMessage("Такой директории не существует");
-                _accentMessage("Создать? (Y/N)");
-                string answer = string.Empty;
-                do {
-                    answer = Console.ReadLine();
-                } while (answer != "y" && answer != "n");
+            if (path_[path_.Length - 1] != '/') { path_ += "/"; }
+            //if (!Directory.Exists(_projectPath + path_)){
+            //    _warnMessage("Такой директории не существует");
+            //    _accentMessage("Создать? (Y/N)");
+            //    string answer = string.Empty;
+            //    do {
+            //        answer = Console.ReadLine();
+            //    } while (answer != "y" && answer != "n");
 
-                if (answer == "y"){
-                    Directory.CreateDirectory(_projectPath + path_);
-                    _okMessage("Создана новая директория :" + path_);
-                    return path_;
-                } else if (answer == "n") { 
-                    _accentMessage("Путь: ");
-                    path_ = _checkPath(Console.ReadLine());
-                }
-            }
+            //    if (answer == "y"){
+            //        Directory.CreateDirectory(_projectPath + path_);
+            //        _okMessage("Создана новая директория :" + path_);
+            //        return path_;
+            //    } else if (answer == "n") { 
+            //        _accentMessage("Путь: ");
+            //        path_ = _checkPath(Console.ReadLine());
+            //    }
+            //}
             return path_;
         }
 
