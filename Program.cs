@@ -16,6 +16,24 @@ namespace Angular_Utility
         //=================================================== PRIVATE_VARIABLES ================================================>
         #region Private_Variables
 
+        private enum _ng_element {
+            component,
+            module,
+            routinModule,
+            style,
+            html,
+            settingsStoreService
+        }
+
+        private static string[] extensionsArr = {
+            ".component.ts",
+            ".module.ts",
+            "-routing.module.ts",
+            ".component.scss",
+            ".component.html",
+            "-settings-store.service.ts"
+        };
+
         private static string 
             _projectPath = string.Empty,
             _generateComponentPattern = "(generate_component || gen_component || g_component || gen_comp || g_comp)",
@@ -87,9 +105,22 @@ namespace Angular_Utility
             } else {
                 dataModel_.path += dataModel_.name + "/";
                 Directory.CreateDirectory(dataModel_.path);
+                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".module.ts")) {
+                }
+                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.ts")) {
+                }
+                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.scss")) {
+                }
+                using(StreamWriter lFileStream = File.CreateText(dataModel_.path + dataModel_.name + ".component.html")) {
+                }
             }
 
             Console.ReadKey();
+        }
+
+        //------------| CREATE_FILE |-------------------------------------------------------------------------------------
+        private static void _createFile() {
+
         }
 
         //------------| CHECK_NAME |-------------------------------------------------------------------------------------
