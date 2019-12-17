@@ -122,8 +122,8 @@ namespace Angular_Utility
                 Directory.CreateDirectory(_projectPath + dataModel_.path);
 
                 lElements = new List<_ng_element>{ 
-                    _ng_element.module,
                     _ng_element.component,
+                    _ng_element.module,
                     _ng_element.html,
                     _ng_element.style
                 };
@@ -142,7 +142,7 @@ namespace Angular_Utility
         //------------| CREATE_FILE |-------------------------------------------------------------------------------------
         private static void _createFile(_ng_element element_, GenerateComponentModel dataModel_) {
             using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_])) {
-                lFileStream.Write(_extensionsArr[(int)element_]);
+                lFileStream.Write(_selectElement(element_, dataModel_));
             }
         }
 
@@ -170,13 +170,60 @@ namespace Angular_Utility
 
         //------------| COMPONENT_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _componentTemplate(GenerateComponentModel dataModel_) {
-            string lContent = string.Empty;
+            string 
+                lContent = string.Empty,
+                lComponent = string.Empty,
+                lImportComponent = string.Empty;
+
+            if(!dataModel_.abstr) {
+                lImportComponent = "Component, ";
+                lComponent = string.Format(@"
+@Component({{
+  selector: '{0}',
+  templateUrl: './{0}.component.html',
+  styleUrls: ['./{0}.component.scss']
+}})", dataModel_.name);
+            }
+
+            lContent = string.Format(@"import {{ {0}OnInit }} from '@angular/core';
+{1}
+export class {2}Component implements OnInit {{
+
+  constructor() {{
+  }}
+
+  ngOnInit() {{
+  }}
+
+}}", lImportComponent, lComponent, _getExportName(dataModel_.name));
             return lContent;
         }
 
         //------------| MODULE_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _moduleTemplate (GenerateComponentModel dataModel_) {
-            string lContent = string.Empty;
+            string
+                lContent = string.Empty,
+                lExportName = _getExportName(dataModel_.name),
+                lImportRoutingModule = (dataModel_.routing) ? string.Format(@"import {{ {0}RoutingModule }} from './{1}-routing.module';
+", lExportName, dataModel_.name) : "",
+                lImports = (dataModel_.routing) ? string.Format(@",
+{0}RoutingModule", lExportName) : "";
+
+            lContent = string.Format(@"import {{ NgModule }} from '@angular/core';
+import {{ CommonModule }} from '@angular/common';
+
+{2}import {{ {0}Component }} from './{1}.component';
+
+@NgModule({{
+  imports: [
+    CommonModule{3}
+  ],
+  declarations: [{0}Component],
+  entryComponents: [{0}Component],
+  exports: [{0}Component]
+}})
+export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports);
+
             return lContent;
         }
 
@@ -195,6 +242,11 @@ namespace Angular_Utility
         //------------| HTML_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _htmlTemplate(GenerateComponentModel dataModel_) {
             string lContent = string.Empty;
+
+            lContent = string.Format(@"<p>
+  {0} works!
+</p>", dataModel_.name);
+
             return lContent;
         }
 
@@ -204,6 +256,17 @@ namespace Angular_Utility
         {
             string lContent = string.Empty;
             return lContent;
+        }
+
+        //------------| GET_EXPORT_NAME |-------------------------------------------------------------------------------------
+        private static string _getExportName(string name_) {
+            string[] lNamesParts = name_.Split('-');
+            for(int i = 0; i < lNamesParts.Length; i++) {
+                string lPart = lNamesParts[i];
+                lPart = lPart[0].ToString().ToUpper() + lPart.Substring(1);
+                lNamesParts[i] = lPart;
+            }
+            return string.Join("", lNamesParts);
         }
 
         //------------| CHECK_NAME |-------------------------------------------------------------------------------------
@@ -231,23 +294,6 @@ namespace Angular_Utility
         private static string _checkPath(string path_) {
             if (path_[0] == '/'){ path_ = path_.Substring(1); }
             if (path_[path_.Length - 1] != '/') { path_ += "/"; }
-            //if (!Directory.Exists(_projectPath + path_)){
-            //    _warnMessage("Такой директории не существует");
-            //    _accentMessage("Создать? (Y/N)");
-            //    string answer = string.Empty;
-            //    do {
-            //        answer = Console.ReadLine();
-            //    } while (answer != "y" && answer != "n");
-
-            //    if (answer == "y"){
-            //        Directory.CreateDirectory(_projectPath + path_);
-            //        _okMessage("Создана новая директория :" + path_);
-            //        return path_;
-            //    } else if (answer == "n") { 
-            //        _accentMessage("Путь: ");
-            //        path_ = _checkPath(Console.ReadLine());
-            //    }
-            //}
             return path_;
         }
 
