@@ -141,14 +141,73 @@ namespace Angular_Utility
 
         //------------| CREATE_FILE |-------------------------------------------------------------------------------------
         private static void _createFile(_ng_element element_, GenerateComponentModel dataModel_) {
-            using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_]))
-            {
+            using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_])) {
                 lFileStream.Write(_extensionsArr[(int)element_]);
             }
         }
 
+        //------------| SELECT_ELEMENT |-------------------------------------------------------------------------------------
+        private static string _selectElement (_ng_element element_, GenerateComponentModel dataModel_) {
+            switch (element_) {
+                case _ng_element.component:
+                    return _componentTemplate(dataModel_);
+                case _ng_element.module:
+                    return _moduleTemplate(dataModel_);
+                case _ng_element.routinModule:
+                    return _routingModuleTemplate(dataModel_);
+                case _ng_element.style:
+                    return _styleTemplate(dataModel_);
+                case _ng_element.html:
+                    return _htmlTemplate(dataModel_);
+                case _ng_element.settingsStoreService:
+                    break;
+                default:
+                    break;
+            }
+
+            return "";
+        }
+
+        //------------| COMPONENT_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _componentTemplate(GenerateComponentModel dataModel_) {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
+        //------------| MODULE_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _moduleTemplate (GenerateComponentModel dataModel_) {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
+        //------------| ROUTING_MODULE_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _routingModuleTemplate(GenerateComponentModel dataModel_) {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
+        //------------| STYLE_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _styleTemplate(GenerateComponentModel dataModel_) {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
+        //------------| HTML_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _htmlTemplate(GenerateComponentModel dataModel_) {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
+
+        //------------| SETTINGS_STORE_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _settingsStoreTemplate(GenerateComponentModel dataModel_)
+        {
+            string lContent = string.Empty;
+            return lContent;
+        }
+
         //------------| CHECK_NAME |-------------------------------------------------------------------------------------
-        private static string _checkName(string name_, string path_){
+        private static string _checkName(string name_, string path_) {
             bool lIsValid = true;
             if (name_ != ""){
                 if (Directory.Exists(path_ + name_)) {
