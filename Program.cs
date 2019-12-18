@@ -46,8 +46,6 @@ namespace Angular_Utility
 
         //------------| MAIN |-------------------------------------------------------------------------------------
         public static void Main(string[] args) {
-            //Console.WriteLine("Путь к Angular проекту: ");
-            //_projectPath = Console.ReadLine();
             _projectPath = File.ReadAllLines("Projects")[0];
             _accentMessage(_projectPath);
             _projectPath += "/ClientApp/src/app/";
@@ -69,17 +67,14 @@ namespace Angular_Utility
         private static void _readQuery(string query_) {
             string[] lQueryPartsArr = query_.Split(new string[] { " -" }, StringSplitOptions.None);
 
-            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern))
-            {
+            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)){
                 _getPropertiesForGenerateComponent(lQueryPartsArr.Skip(1).ToArray());
                 return;
             }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern))
-            {
+            else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)){
                 return;
             }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern))
-            {
+            else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)){
                 return;
             }
         }
@@ -163,7 +158,8 @@ namespace Angular_Utility
                 }
             }
 
-            Console.ReadKey();
+            _okMessage("Done");
+            _processingRequest();
         }
 
         //------------| CREATE_FILES |-------------------------------------------------------------------------------------
@@ -194,7 +190,7 @@ namespace Angular_Utility
                 case _ng_element.html:
                     return _htmlTemplate(dataModel_);
                 case _ng_element.settingsStoreService:
-                    break;
+                    return _settingsStoreTemplate(dataModel_);
                 default:
                     break;
             }
@@ -219,11 +215,13 @@ namespace Angular_Utility
 }})", dataModel_.name);
             }
 
-            lContent = string.Format(@"import {{ {0}OnInit }} from '@angular/core';
+            lContent = string.Format(@"import {{ {0}OnInit, Injector }} from '@angular/core';
 {1}
 export class {2}Component implements OnInit {{
 
-  constructor() {{
+  constructor(
+    protected readonly injector: Injector
+  ) {{
   }}
 
   ngOnInit() {{
@@ -242,6 +240,9 @@ export class {2}Component implements OnInit {{
 ", lExportName, dataModel_.name) : "",
                 lImports = (dataModel_.routing) ? string.Format(@",
     {0}RoutingModule", lExportName) : "",
+                lNgModelImports = (dataModel_.routing) ? "" : $@",
+  entryComponents: [{lExportName}Component],
+  exports: [{lExportName}Component]",
                 lDialogsImports = string.Empty,
                 lDialogsNgModuleImports = string.Empty;
 
@@ -267,7 +268,7 @@ import {{ CommonModule }} from '@angular/common';
   entryComponents: [{0}Component],
   exports: [{0}Component]
 }})
-export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports); // В компонентах страниц (--routing) entryComponents и exports не нужны
+export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports);
 
             return lContent;
         }
@@ -331,6 +332,29 @@ export class {0}RoutingModule {{ }}", _getExportName(dataModel_.name), dataModel
         private static string _settingsStoreTemplate(GenerateComponentModel dataModel_)
         {
             string lContent = string.Empty;
+
+            lContent = string.Format(@"import {{ Injectable }} from '@angular/core';
+
+@Injectable()
+export class {0}SettingsStoreService {{
+
+  private default: any = <any>{{ }}
+
+  private stored: any;
+
+  constructor() {{
+    this.stored = {{ ...this.default }};
+  }}
+
+  get(): any {{
+    return this.stored;
+  }}
+
+  reset(): any {{
+    return this.default;
+  }}
+}}", _getExportName(dataModel_.name));
+
             return lContent;
         }
 
