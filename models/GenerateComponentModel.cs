@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Angular_Utility.models {
     public class GenerateComponentModel {
-        public string 
+        public string
             name,
             path;
-        public string[] dilogs;
+        public string[] dialogs = new string[]{};
         public bool 
-            routing,
-            flat,
-            abstr,
-            settingStore;
+            routing = false,
+            flat = false,
+            abstr = false,
+            settingStore = false;
     }
 }

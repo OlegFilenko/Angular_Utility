@@ -62,20 +62,26 @@ namespace Angular_Utility
         private static void _processingRequest() {
             _accentMessage("Введите запрос");
             string lQuery = Console.ReadLine();
-            string[] lQueryPartsArr = lQuery.Split(' ');
+            _readQuery(lQuery);
+        }
 
-            if(Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)) {
+        //------------| READ_QUERY |-------------------------------------------------------------------------------------
+        private static void _readQuery(string query_) {
+            string[] lQueryPartsArr = query_.Split(new string[] { " -" }, StringSplitOptions.None);
+
+            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern))
+            {
                 _getPropertiesForGenerateComponent(lQueryPartsArr.Skip(1).ToArray());
                 return;
-            } else if(Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)){
-                return;
-            } else if(Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)) {
+            }
+            else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern))
+            {
                 return;
             }
-
-            lQuery = null;
-            lQueryPartsArr = null;
-            _processingRequest();
+            else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern))
+            {
+                return;
+            }
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
@@ -93,14 +99,20 @@ namespace Angular_Utility
             GenerateComponentModel lDataModel = new GenerateComponentModel {
                 path = _checkPath(lPath),
                 name = _checkName(lName, lPath),
-                dilogs = lDialogs?.Replace(" ", "").Split(','),
+                dialogs = lDialogs.Replace(" ", "").Split(','),
                 routing = lRouting,
                 flat = lFlat,
                 abstr = lAbstract,
                 settingStore = lSettingStore
             };
 
+            if (lDataModel.dialogs.Length == 1 && lDataModel.dialogs[0] == "") {
+                lDataModel.dialogs = new string[] { };
+            }
+
             _generateComponent(lDataModel);
+
+            _okMessage("Done");
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
@@ -121,6 +133,8 @@ namespace Angular_Utility
                 dataModel_.path += dataModel_.name + "/";
                 Directory.CreateDirectory(_projectPath + dataModel_.path);
 
+                string[] BP = dataModel_.dialogs;
+
                 lElements = new List<_ng_element>{ 
                     _ng_element.component,
                     _ng_element.module,
@@ -132,11 +146,31 @@ namespace Angular_Utility
                 if (dataModel_.settingStore) { lElements.Add(_ng_element.settingsStoreService); }
             }
 
-            foreach (_ng_element element in lElements){
-                _createFile(element, dataModel_);
+            _createFiles(lElements.ToArray(), dataModel_);
+
+            if (dataModel_.dialogs.Length > 0) {
+                foreach (string dialog in dataModel_.dialogs) { 
+                    Directory.CreateDirectory(_projectPath + dataModel_.path + "dialogs/"+ dialog + "/");
+                    _createFiles(new _ng_element[] { 
+                        _ng_element.component, 
+                        _ng_element.module,
+                        _ng_element.html,
+                        _ng_element.style
+                    }, new GenerateComponentModel(){ 
+                        name=dialog,
+                        path=dataModel_.path + "dialogs/" + dialog + "/"}
+                    );
+                }
             }
 
             Console.ReadKey();
+        }
+
+        //------------| CREATE_FILES |-------------------------------------------------------------------------------------
+        private static void _createFiles(_ng_element[] elementsArr_, GenerateComponentModel dataModel_) {
+            foreach (_ng_element element in elementsArr_) {
+                _createFile(element, dataModel_);
+            }
         }
 
         //------------| CREATE_FILE |-------------------------------------------------------------------------------------
@@ -207,22 +241,33 @@ export class {2}Component implements OnInit {{
                 lImportRoutingModule = (dataModel_.routing) ? string.Format(@"import {{ {0}RoutingModule }} from './{1}-routing.module';
 ", lExportName, dataModel_.name) : "",
                 lImports = (dataModel_.routing) ? string.Format(@",
-{0}RoutingModule", lExportName) : "";
+    {0}RoutingModule", lExportName) : "",
+                lDialogsImports = string.Empty,
+                lDialogsNgModuleImports = string.Empty;
+
+            if (dataModel_.dialogs.Length != 0) {
+                foreach (string dialog in dataModel_.dialogs) {
+                    lDialogsImports += string.Format(@"import {{ {0}Module }} from './dialogs/{1}/{1}.module';
+", _getExportName(dialog), dialog);
+                    lDialogsNgModuleImports += string.Format(@",
+    {0}Module", _getExportName(dialog));
+                }
+            }
 
             lContent = string.Format(@"import {{ NgModule }} from '@angular/core';
 import {{ CommonModule }} from '@angular/common';
-
+{4}
 {2}import {{ {0}Component }} from './{1}.component';
 
 @NgModule({{
   imports: [
-    CommonModule{3}
+    CommonModule{3}{5}
   ],
   declarations: [{0}Component],
   entryComponents: [{0}Component],
   exports: [{0}Component]
 }})
-export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports);
+export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports); // В компонентах страниц (--routing) entryComponents и exports не нужны
 
             return lContent;
         }
@@ -230,6 +275,37 @@ export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModul
         //------------| ROUTING_MODULE_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _routingModuleTemplate(GenerateComponentModel dataModel_) {
             string lContent = string.Empty;
+
+            lContent = string.Format(@"import {{ NgModule }} from '@angular/core';
+import {{ Routes, RouterModule }} from '@angular/router';
+import {{ {0}Component }} from './{1}.component';
+
+const routes: Routes = [
+  {{
+    path: '',
+    component: {0}Component
+  }}
+];
+
+@NgModule({{
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule]
+}})
+export class {0}RoutingModule {{ }}", _getExportName(dataModel_.name), dataModel_.name);
+
+
+            string appRoutingModule = File.ReadAllText(_projectPath + "app-routing.module.ts");
+            string startSerching = "children: [";
+            int startIndex = appRoutingModule.IndexOf(startSerching) + startSerching.Length;
+            int endIndex = appRoutingModule.IndexOf(@"}
+    ]", startIndex);
+            appRoutingModule = appRoutingModule.Insert(endIndex + 1, string.Format(@",
+      {{
+        path: '{0}',
+        loadChildren: '{1}'
+      }}", dataModel_.name, "app/" + dataModel_.path + dataModel_.name + ".module" + "#" + _getExportName(dataModel_.name) + "Module"));
+            File.WriteAllText(_projectPath + "app-routing.module.ts", appRoutingModule);
+
             return lContent;
         }
 
@@ -292,6 +368,7 @@ export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModul
 
         //------------| CHECK_PATH |-------------------------------------------------------------------------------------
         private static string _checkPath(string path_) {
+            if (path_ == string.Empty){ return "";  }
             if (path_[0] == '/'){ path_ = path_.Substring(1); }
             if (path_[path_.Length - 1] != '/') { path_ += "/"; }
             return path_;
@@ -314,14 +391,14 @@ export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModul
         //------------| GET_PARAM_VALUE |-------------------------------------------------------------------------------------
         private static string _getParamValue(string[] params_, string paramName_) {
             if(params_.Length == 0) { return ""; }
-            string[] lArr = params_.Where(param => Regex.IsMatch(param, $"^-{paramName_}=\".*\"")).ToArray();
+            string[] lArr = params_.Where(param => Regex.IsMatch(param, $"^{paramName_}=\".*\"")).ToArray();
             string lParam = (lArr.Length > 0) ? lArr[0] : "";
-            return lParam.Replace($"-{paramName_}=\"", "").Replace("\"", "");
+            return lParam.Replace($"{paramName_}=\"", "").Replace("\"", "");
         }
 
         //------------| CHECK_PARAM_EXISTS |-------------------------------------------------------------------------------------
         private static bool _checkParamExists(string[] params_, string paramName_) {
-            return Array.Exists(params_, param => Regex.IsMatch(param, $"^--{paramName_}$"));
+            return Array.Exists(params_, param => Regex.IsMatch(param, $"^-{paramName_}$"));
         }
 
         //------------| DISTINGUISH_MESSAGE |-------------------------------------------------------------------------------------
