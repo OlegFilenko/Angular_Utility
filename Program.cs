@@ -81,7 +81,7 @@ namespace Angular_Utility
             bool 
                 lRouting = _checkParamExists(params_, "routing"),
                 lFlat = _checkParamExists(params_, "flat"),
-                lAbstract = _checkParamExists(params_, "absract"),
+                lAbstract = _checkParamExists(params_, "abstract"),
                 lSettingStore = _checkParamExists(params_, "settings_store");
 
             GenerateComponentModel lDataModel = new GenerateComponentModel {
@@ -100,7 +100,8 @@ namespace Angular_Utility
 
             _generateComponent(lDataModel);
 
-            _okMessage("Done");
+            _okMessage("==Done==");
+            _processingRequest();
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
@@ -150,9 +151,6 @@ namespace Angular_Utility
                     );
                 }
             }
-
-            _okMessage("Done");
-            _processingRequest();
         }
 
         //------------| CREATE_FILES |-------------------------------------------------------------------------------------
