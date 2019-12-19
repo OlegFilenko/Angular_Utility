@@ -60,21 +60,14 @@ namespace Angular_Utility
         private static void _processingRequest() {
             _accentMessage("Введите запрос");
             string lQuery = Console.ReadLine();
-            _readQuery(lQuery);
-        }
+            string[] lQueryPartsArr = lQuery.Split(new string[] { " -" }, StringSplitOptions.None);
 
-        //------------| READ_QUERY |-------------------------------------------------------------------------------------
-        private static void _readQuery(string query_) {
-            string[] lQueryPartsArr = query_.Split(new string[] { " -" }, StringSplitOptions.None);
-
-            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)){
+            if(Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)) {
                 _getPropertiesForGenerateComponent(lQueryPartsArr.Skip(1).ToArray());
                 return;
-            }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)){
+            } else if(Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)) {
                 return;
-            }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)){
+            } else if(Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)) {
                 return;
             }
         }
@@ -264,11 +257,9 @@ import {{ CommonModule }} from '@angular/common';
   imports: [
     CommonModule{3}{5}
   ],
-  declarations: [{0}Component],
-  entryComponents: [{0}Component],
-  exports: [{0}Component]
+  declarations: [{0}Component]{6}
 }})
-export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports);
+export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports, lNgModelImports);
 
             return lContent;
         }
