@@ -5,13 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Angular_Utility.models {
-    public class GenerateComponentModel : IDataModel {
-        public string[] dialogs = new string[]{};
-        public bool 
-            routing = false,
-            flat = false,
-            abstr = false,
-            settingStore = false;
+    class GenerateModelsModel : IDataModel {
+        public string fromPath;
+
+        public string[]
+            suffixes = new string[] { },
+            prefixes = new string[] { };
+
+        public bool table = false;
 
         public string path { get; set; }
         public string name { get; set; }

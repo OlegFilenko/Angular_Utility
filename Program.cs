@@ -23,7 +23,8 @@ namespace Angular_Utility
             routinModule,
             style,
             html,
-            settingsStoreService
+            settingsStoreService,
+            model
         }
 
         private static string[] _extensionsArr = {
@@ -32,14 +33,16 @@ namespace Angular_Utility
             "-routing.module.ts",
             ".component.scss",
             ".component.html",
-            "-settings-store.service.ts"
+            "-settings-store.service.ts",
+            ".model.ts"
         };
 
         private static string 
             _projectPath = string.Empty,
             _generateComponentPattern = "(generate_component || gen_component || g_component || gen_comp || g_comp)",
             _removeComponentPattern = "(remove_component || rem_component || rm_component || rem_comp || rm_comp)",
-            _renameComponentPattern = "(rename_component || ren_component || rn_component || ren_comp || rn_comp)";
+            _renameComponentPattern = "(rename_component || ren_component || rn_component || ren_comp || rn_comp)",
+            _generateModelPattern = "(generate_models || gen_models || g_models || gen_mds || g_mds)";
         #endregion
         //==================================================== PUBLIC_METHODS ==================================================>
         #region Public_Methods
@@ -67,17 +70,19 @@ namespace Angular_Utility
         private static void _readQuery(string query_) {
             string[] lQueryPartsArr = query_.Split(new string[] { " -" }, StringSplitOptions.None);
 
-            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)){
+            if (Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)) {
                 _getPropertiesForGenerateComponent(lQueryPartsArr.Skip(1).ToArray());
                 return;
-            }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)){
+            } else if (Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)) {
                 return;
-            }
-            else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)){
+            } else if (Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)) {
                 return;
+            } else if (Regex.IsMatch(lQueryPartsArr[0], _generateModelPattern)) { 
+
             }
         }
+
+        #region GENERATE COMPONENT
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
         private static void _getPropertiesForGenerateComponent(string[] params_) {
@@ -160,42 +165,6 @@ namespace Angular_Utility
             }
         }
 
-        //------------| CREATE_FILES |-------------------------------------------------------------------------------------
-        private static void _createFiles(_ng_element[] elementsArr_, GenerateComponentModel dataModel_) {
-            foreach (_ng_element element in elementsArr_) {
-                _createFile(element, dataModel_);
-            }
-        }
-
-        //------------| CREATE_FILE |-------------------------------------------------------------------------------------
-        private static void _createFile(_ng_element element_, GenerateComponentModel dataModel_) {
-            using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_])) {
-                lFileStream.Write(_selectElement(element_, dataModel_));
-            }
-        }
-
-        //------------| SELECT_ELEMENT |-------------------------------------------------------------------------------------
-        private static string _selectElement (_ng_element element_, GenerateComponentModel dataModel_) {
-            switch (element_) {
-                case _ng_element.component:
-                    return _componentTemplate(dataModel_);
-                case _ng_element.module:
-                    return _moduleTemplate(dataModel_);
-                case _ng_element.routinModule:
-                    return _routingModuleTemplate(dataModel_);
-                case _ng_element.style:
-                    return _styleTemplate(dataModel_);
-                case _ng_element.html:
-                    return _htmlTemplate(dataModel_);
-                case _ng_element.settingsStoreService:
-                    return _settingsStoreTemplate(dataModel_);
-                default:
-                    break;
-            }
-
-            return "";
-        }
-
         //------------| COMPONENT_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _componentTemplate(GenerateComponentModel dataModel_) {
             string 
@@ -230,7 +199,8 @@ export class {2}Component implements OnInit {{
         }
 
         //------------| MODULE_TEMPLATE |-------------------------------------------------------------------------------------
-        private static string _moduleTemplate (GenerateComponentModel dataModel_) {
+        private static string _moduleTemplate(GenerateComponentModel dataModel_)
+        {
             string
                 lContent = string.Empty,
                 lExportName = _getExportName(dataModel_.name),
@@ -244,8 +214,10 @@ export class {2}Component implements OnInit {{
                 lDialogsImports = string.Empty,
                 lDialogsNgModuleImports = string.Empty;
 
-            if (dataModel_.dialogs.Length != 0) {
-                foreach (string dialog in dataModel_.dialogs) {
+            if (dataModel_.dialogs.Length != 0)
+            {
+                foreach (string dialog in dataModel_.dialogs)
+                {
                     lDialogsImports += string.Format(@"import {{ {0}Module }} from './dialogs/{1}/{1}.module';
 ", _getExportName(dialog), dialog);
                     lDialogsNgModuleImports += string.Format(@",
@@ -272,7 +244,8 @@ export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModul
         }
 
         //------------| ROUTING_MODULE_TEMPLATE |-------------------------------------------------------------------------------------
-        private static string _routingModuleTemplate(GenerateComponentModel dataModel_) {
+        private static string _routingModuleTemplate(GenerateComponentModel dataModel_)
+        {
             string lContent = string.Empty;
 
             lContent = string.Format(@"import {{ NgModule }} from '@angular/core';
@@ -309,13 +282,15 @@ export class {0}RoutingModule {{ }}", _getExportName(dataModel_.name), dataModel
         }
 
         //------------| STYLE_TEMPLATE |-------------------------------------------------------------------------------------
-        private static string _styleTemplate(GenerateComponentModel dataModel_) {
+        private static string _styleTemplate(GenerateComponentModel dataModel_)
+        {
             string lContent = string.Empty;
             return lContent;
         }
 
         //------------| HTML_TEMPLATE |-------------------------------------------------------------------------------------
-        private static string _htmlTemplate(GenerateComponentModel dataModel_) {
+        private static string _htmlTemplate(GenerateComponentModel dataModel_)
+        {
             string lContent = string.Empty;
 
             lContent = string.Format(@"<p>
@@ -324,7 +299,6 @@ export class {0}RoutingModule {{ }}", _getExportName(dataModel_.name), dataModel
 
             return lContent;
         }
-
 
         //------------| SETTINGS_STORE_TEMPLATE |-------------------------------------------------------------------------------------
         private static string _settingsStoreTemplate(GenerateComponentModel dataModel_)
@@ -354,6 +328,88 @@ export class {0}SettingsStoreService {{
 }}", _getExportName(dataModel_.name));
 
             return lContent;
+        }
+        #endregion
+
+        #region GENERATE MODELS
+
+        //------------| GET_PROPERTIES_FOR_GENERATE_MODELS |-------------------------------------------------------------------------------------
+        private static void _getPropertiesForGenerateModels(string[] params_) {
+            string
+                lRootName = _getParamValue(params_, "rootName"),
+                lOutPath = _getParamValue(params_, "outPath"),
+                lFromPath = _getParamValue(params_, "fromPath"),
+                lSuffixes = _getParamValue(params_, "suffixes"),
+                lPrefixes = _getParamValue(params_ , "prefixes");
+
+            bool
+                lTable = _checkParamExists(params_, "table");
+
+            GenerateModelsModel lDataModel = new GenerateModelsModel {
+                path = _checkPath(lOutPath),
+                name = lRootName,
+                fromPath = lFromPath,
+                suffixes = lSuffixes.Replace(" ", "").Split(','),
+                prefixes = lPrefixes.Replace(" ", "").Split(','),
+                table = lTable
+            };
+
+            _generateModels(lDataModel);
+
+            _okMessage("==Done==");
+            _processingRequest();
+        }
+
+        //------------| GENERATE_MODELS |---------------------------------------------------------------------
+        private static void _generateModels(GenerateModelsModel dataModel_) {
+            
+        }
+
+        //------------| MODEL_TEMPLATE |-------------------------------------------------------------------------------------
+        private static string _modelTemplate(GenerateModelsModel dataModel_) {
+            string lResult = string.Empty;
+            return lResult;
+        }
+
+        #endregion
+
+
+        //------------| CREATE_FILES |-------------------------------------------------------------------------------------
+        private static void _createFiles(_ng_element[] elementsArr_, IDataModel dataModel_) {
+            foreach (_ng_element element in elementsArr_) {
+                _createFile(element, dataModel_);
+            }
+        }
+
+        //------------| CREATE_FILE |-------------------------------------------------------------------------------------
+        private static void _createFile(_ng_element element_, IDataModel dataModel_) {
+            using (StreamWriter lFileStream = File.CreateText(_projectPath + dataModel_.path + dataModel_.name + _extensionsArr[(int)element_])) {
+                lFileStream.Write(_selectElement(element_, dataModel_));
+            }
+        }
+
+        //------------| SELECT_ELEMENT |-------------------------------------------------------------------------------------
+        private static string _selectElement(_ng_element element_, IDataModel dataModel_) {
+            switch (element_) {
+                case _ng_element.component:
+                    return _componentTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.module:
+                    return _moduleTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.routinModule:
+                    return _routingModuleTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.style:
+                    return _styleTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.html:
+                    return _htmlTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.settingsStoreService:
+                    return _settingsStoreTemplate((GenerateComponentModel)dataModel_);
+                case _ng_element.model:
+                    return _modelTemplate((GenerateModelsModel)dataModel_);
+                default:
+                    break;
+            }
+
+            return "";
         }
 
         //------------| GET_EXPORT_NAME |-------------------------------------------------------------------------------------

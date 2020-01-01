@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="models\GenerateComponentModel.cs" />
+    <Compile Include="models\GenerateModelsModel.cs" />
+    <Compile Include="models\IDataModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
