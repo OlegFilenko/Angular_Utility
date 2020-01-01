@@ -63,8 +63,7 @@ namespace Angular_Utility
         private static void _processingRequest() {
             _accentMessage("Введите запрос");
             string lQuery = Console.ReadLine();
-            _readQuery(lQuery);
-        }
+            string[] lQueryPartsArr = lQuery.Split(new string[] { " -" }, StringSplitOptions.None);
 
         //------------| READ_QUERY |-------------------------------------------------------------------------------------
         private static void _readQuery(string query_) {
@@ -234,11 +233,9 @@ import {{ CommonModule }} from '@angular/common';
   imports: [
     CommonModule{3}{5}
   ],
-  declarations: [{0}Component],
-  entryComponents: [{0}Component],
-  exports: [{0}Component]
+  declarations: [{0}Component]{6}
 }})
-export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports);
+export class {0}Module {{ }}", lExportName, dataModel_.name, lImportRoutingModule, lImports, lDialogsImports, lDialogsNgModuleImports, lNgModelImports);
 
             return lContent;
         }
