@@ -64,6 +64,7 @@ namespace Angular_Utility
             _accentMessage("Введите запрос");
             string lQuery = Console.ReadLine();
             string[] lQueryPartsArr = lQuery.Split(new string[] { " -" }, StringSplitOptions.None);
+        }
 
         //------------| READ_QUERY |-------------------------------------------------------------------------------------
         private static void _readQuery(string query_) {
