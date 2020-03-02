@@ -1,16 +1,16 @@
-﻿using Angular_Utility_2.Data;
-using Angular_Utility_2.Enums;
+﻿using Angular_Utility.Data;
+using Angular_Utility.Enums;
 using System;
 using System.IO;
 
 namespace Angular_Utility {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //=====| Programm |=======================================================================================================>>
+    //=====| Program |=======================================================================================================>>
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    #region class ProgrammProgramm
+    #region class Programm
 
-    class ProgrammProgramm {
+    class Program {
         //=================================================== PRIVATE_VARIABLES ================================================>
         #region Private_Variables
 
