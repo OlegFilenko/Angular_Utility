@@ -52,6 +52,10 @@ namespace Angular_Utility {
                             _reflectModels(new ReflectModelsData(lQueryData));
                             break;
                         }
+                    case NgAction.reflectController: {
+                            _reflectModels(new ReflectModelsData(lQueryData));
+                            break;
+                        }
                     case NgAction.renameComponent: {
                             break;
                         }
@@ -92,16 +96,23 @@ namespace Angular_Utility {
                 FileInfo lFileInfo;
                 foreach(string filePath_ in reflectModelsData_.filePathArray) {
                     lFileInfo = new FileInfo(filePath_);
-                    string lClientFileName = lFileInfo.Name.Replace(lFileInfo.Extension, "");
-                    int lIndexLast = lClientFileName.LastIndexOf("Model");
-                    if(lIndexLast != -1) {
-                        lClientFileName = lClientFileName.Remove(lIndexLast);
+                    string lClientFileName = Path.GetFileNameWithoutExtension(lFileInfo.Name);
+                    int lLastIndex = lClientFileName.LastIndexOf("Model");
+                    if(lLastIndex != -1) {
+                        lClientFileName = lClientFileName.Remove(lLastIndex);
                     }
                     lClientFileName = Utility.getClientFileName(lClientFileName);
                     _generateElement(new GenerateElementData(NgElement.model, lClientFileName, reflectModelsData_.pathTo, lFileInfo as object));
                 }
             }
 
+        }
+
+        //------------| REFLECT_CONTROLLER |-------------------------------------------------------------------------------------
+        private static void _reflectController(ReflectControllerData reflectControllerData_) {
+            if(reflectControllerData_.isValid) {
+                //_generateElement(new GenerateElementData())
+            }
         }
 
         #endregion

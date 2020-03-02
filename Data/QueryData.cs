@@ -31,7 +31,8 @@ namespace Angular_Utility.Data {
             _deleteComponentPattern = "(remove[-|_]component|rem[-|_]component|rm[-|_]component|rem[-|_]comp|rm[-|_]comp)",
             _renameComponentPattern = "(rename[-|_]component|ren[-|_]component|rn[-|_]component|ren[-|_]comp|rn[-|_]comp)",
             _generateModelPattern = "(generate[-|_]models|gen[-|_]models|g[-|_]models|gen[-|_]mds|g[-|_]mds)",
-            _reflectModelsPattern = "(reflect[-|_]models|ref[-|_]models|ref[-|_]mod)";
+            _reflectModelsPattern = "(reflect[-|_]models|ref[-|_]models|ref[-|_]mod)",
+            _reflectControllerPattern = "(reflect[-|_]controller|ref[-|_]controller|ref[-|_]cont)";
 
         #endregion
         //====================================================| CONSTRUCTOR |===================================================>
@@ -73,6 +74,9 @@ namespace Angular_Utility.Data {
                 return;
             } else if(Regex.IsMatch(lAction, _reflectModelsPattern)) {
                 actionType = NgAction.reflectModels;
+                return;
+            } else if(Regex.IsMatch(lAction, _reflectControllerPattern)) {
+                actionType = NgAction.reflectController;
                 return;
             } else {
                 actionType = NgAction.errorQuery;

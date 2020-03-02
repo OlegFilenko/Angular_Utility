@@ -12,6 +12,7 @@
         deleteComponent,
         generateModel,
         reflectModels,
+        reflectController,
         errorQuery
     }
 

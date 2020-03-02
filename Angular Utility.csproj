@@ -49,6 +49,7 @@
     <Compile Include="Data\GenerateComponentData.cs" />
     <Compile Include="Data\GenerateElementData.cs" />
     <Compile Include="Data\QueryData.cs" />
+    <Compile Include="Data\ReflectControllerData.cs" />
     <Compile Include="Data\ReflectModelsData.cs" />
     <Compile Include="Enums\NgAction.cs" />
     <Compile Include="Enums\NgComponent.cs" />
