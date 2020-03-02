@@ -1,38 +1,30 @@
-﻿using Angular_Utility.models;
+﻿using Angular_Utility.Data;
+using Angular_Utility.Enums;
 using System;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 
-namespace Angular_Utility
-{
+namespace Angular_Utility {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //=====| Program |========================================================================================================>>
+    //=====| Program |=======================================================================================================>>
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     #region class Program
 
-    public class Program {
+    class Program {
         //=================================================== PRIVATE_VARIABLES ================================================>
         #region Private_Variables
 
-        private static string 
-            _projectPath = string.Empty,
-            _generateComponentPattern = "(generate_component || gen_component || g_component || gen_comp || g_comp)",
-            _removeComponentPattern = "(remove_component || rem_component || rm_component || rem_comp || rm_comp)",
-            _renameComponentPattern = "(rename_component || ren_component || rn_component || ren_comp || rn_comp)";
+        private static string
+            _projectPath = string.Empty;
+
         #endregion
         //==================================================== PUBLIC_METHODS ==================================================>
         #region Public_Methods
 
-        //------------| MAIN |-------------------------------------------------------------------------------------
-        public static void Main(string[] args) {
-            //Console.WriteLine("Путь к Angular проекту: ");
-            //_projectPath = Console.ReadLine();
+        static void Main(string[] args) {
             _projectPath = File.ReadAllLines("Projects")[0];
-            _accentMessage(_projectPath);
+            ConsoleWriter.accentMessageLine(_projectPath);
             _projectPath += "/ClientApp/src/app/";
-            Console.ReadKey();
             _processingRequest();
         }
 
@@ -40,151 +32,76 @@ namespace Angular_Utility
         //===================================================== PRIVATE_METHODS ================================================>
         #region Private_Methods
 
-        //------------| QUERY_HANDLER |-------------------------------------------------------------------------------------
+        //------------| PROCESSING_REQUEST |-------------------------------------------------------------------------------------
         private static void _processingRequest() {
-            string lQuery = Console.ReadLine();
-            string[] lQueryPartsArr = lQuery.Split(' ');
+            do {
+                ConsoleWriter.accentMessageLine("Введите запрос");
+                string lQuery = Console.ReadLine();
+                QueryData lQueryData = new QueryData(lQuery);
 
-            if(Regex.IsMatch(lQueryPartsArr[0], _generateComponentPattern)) {
-                _getPropertiesForGenerateComponent(lQueryPartsArr.Skip(1).ToArray());
-                return;
-            } else if(Regex.IsMatch(lQueryPartsArr[0], _removeComponentPattern)){
-                return;
-            } else if(Regex.IsMatch(lQueryPartsArr[0], _renameComponentPattern)) {
-                return;
-            }
+                switch(lQueryData.actionType) {
+                    case NgAction.generateComponent: {
+                            _generateComponent(new GenerateComponentData(lQueryData));
+                            break;
+                        }
+                    case NgAction.generateElement: {
+                            _generateElement(new GenerateElementData(lQueryData));
+                            break;
+                        }
+                    case NgAction.reflectModels: {
+                            _reflectModels(new ReflectModelsData(lQueryData));
+                            break;
+                        }
+                    case NgAction.renameComponent: {
+                            break;
+                        }
+                    case NgAction.deleteComponent: {
+                            break;
+                        }
+                    case NgAction.generateModel: {
+                            break;
+                        }
+                    case NgAction.errorQuery: {
+                            ConsoleWriter.warnMessageLine("Incorrect query");
+                            break;
+                        }
+                }
+            } while(true);
         }
 
         //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
-        private static void _getPropertiesForGenerateComponent(string[] params_) {
-            string 
-                lName = _getParamValue(params_, "name"),
-                lPath = _getParamValue(params_, "path"),
-                lDialogs = _getParamValue(params_, "dialogs");
-            bool 
-                lRouting = _checkParamExists(params_, "routing"),
-                lFlat = _checkParamExists(params_, "flat"),
-                lAbstract = _checkParamExists(params_, "absract"),
-                lSettingStore = _checkParamExists(params_, "settings_store");
-
-            GenerateComponentModel lDataModel = new GenerateComponentModel {
-                path = _checkPath(lPath),
-                name = _checkName(lName, lPath),
-                dilogs = lDialogs.Replace(" ", "").Split(','),
-                routing = lRouting,
-                flat = lFlat,
-                abstr = lAbstract,
-                settingStore = lSettingStore
-            };
-        }
-
-        //------------| GENERATE_COMPONENT |-------------------------------------------------------------------------------------
-        private static void _generateComponent(GenerateComponentModel dataModel_){
-            if (dataModel_.flat){
-
-            }else if (dataModel_.abstr){
-
-            } else {
-                dataModel_.path += dataModel_.name + "/";
-                Directory.CreateDirectory(dataModel_.path);
-            }
-
-            Console.ReadKey();
-        }
-
-        //------------| CHECK_NAME |-------------------------------------------------------------------------------------
-        private static string _checkName(string name_, string path_){
-            bool lIsValid = true;
-            if (name_ != ""){
-                if (Directory.Exists(path_ + name_)) {
-                    _warnMessage("Директория компонента по указанному пути уже существует. Укажите другое имя компонента");
-                    lIsValid = false;
-                }
-            } else {
-                _warnMessage("Необходимо указать имя компонента");
-                lIsValid = false;
-            }
-
-            if (!lIsValid){
-                _accentMessage("Имя: ");
-                name_ = _checkName(Console.ReadLine(), path_);
-            }
-
-            return name_;
-        }
-
-        //------------| CHECK_PATH |-------------------------------------------------------------------------------------
-        private static string _checkPath(string path_) {
-            if (path_[0] == '/'){ path_ = path_.Substring(1); }
-            if (path_.[path_.Length - 1] != "/") { path_ += "/"; }
-            if (!Directory.Exists(_projectPath + path_)){
-                _warnMessage("Такой директории не существует");
-                _accentMessage("Создать? (Y/N)");
-                string answer = string.Empty;
-                do {
-                    answer = Console.ReadLine();
-                } while (answer != "y" && answer != "n");
-
-                if (answer == "y"){
-                    Directory.CreateDirectory(_projectPath + path_);
-                    _okMessage("Создана новая директория :" + path_);
-                    return path_;
-                } else if (answer == "n") { 
-                    _accentMessage("Путь: ");
-                    path_ = _checkPath(Console.ReadLine());
+        private static void _generateComponent(GenerateComponentData componentData_) {
+            if(componentData_.isValid) {
+                foreach(NgElement element in componentData_.elementsSet) {
+                    _generateElement(new GenerateElementData(element, componentData_.name, componentData_.path, componentData_ as object));
                 }
             }
-            return path_;
         }
 
-        //------------| RENAME_COMPONENT |-------------------------------------------------------------------------------------
-        private static void _getPropertiesForRenameComponent(string[] params_) {
-            Console.WriteLine("rename compoent");
-            Console.WriteLine(string.Join("\n", params_));
-            Console.ReadKey();
+        //------------| GENERATE_ELEMENT |-------------------------------------------------------------------------------------
+        private static void _generateElement(GenerateElementData elementData_) {
+            if(!Directory.Exists(elementData_.path)) {
+                Directory.CreateDirectory(elementData_.path);
+            }
+            File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
         }
 
-        //------------| REMOVE_COMPONENT |-------------------------------------------------------------------------------------
-        private static void _getPropertiesForRemoveComponent(string[] params_) {
-            Console.WriteLine("remove compoent");
-            Console.WriteLine(string.Join("\n", params_));
-            Console.ReadKey();
-        }
+        //------------| REFLECT_MODELS |-------------------------------------------------------------------------------------
+        private static void _reflectModels(ReflectModelsData reflectModelsData_) {
+            if(reflectModelsData_.isValid) {
+                FileInfo lFileInfo;
+                foreach(string filePath_ in reflectModelsData_.filePathArray) {
+                    lFileInfo = new FileInfo(filePath_);
+                    string lClientFileName = lFileInfo.Name.Replace(lFileInfo.Extension, "");
+                    int lIndexLast = lClientFileName.LastIndexOf("Model");
+                    if(lIndexLast != -1) {
+                        lClientFileName = lClientFileName.Remove(lIndexLast);
+                    }
+                    lClientFileName = Utility.getClientFileName(lClientFileName);
+                    _generateElement(new GenerateElementData(NgElement.model, lClientFileName, reflectModelsData_.pathTo, lFileInfo as object));
+                }
+            }
 
-        //------------| GET_PARAM_VALUE |-------------------------------------------------------------------------------------
-        private static string _getParamValue(string[] params_, string paramName_) {
-            if(params_.Length == 0) { return ""; }
-            string[] lArr = params_.Where(param => Regex.IsMatch(param, $"^-{paramName_}=\".*\"")).ToArray();
-            string lParam = (lArr.Length > 0) ? lArr[0] : "";
-            return lParam.Replace($"-{paramName_}=\"", "").Replace("\"", "");
-        }
-
-        //------------| CHECK_PARAM_EXISTS |-------------------------------------------------------------------------------------
-        private static bool _checkParamExists(string[] params_, string paramName_) {
-            return Array.Exists(params_, param => Regex.IsMatch(param, $"^--{paramName_}$"));
-        }
-
-        //------------| DISTINGUISH_MESSAGE |-------------------------------------------------------------------------------------
-        private static void _distinguishMessage(string message_, ConsoleColor messageColor_){
-            ConsoleColor defColor = Console.ForegroundColor;
-            Console.ForegroundColor = messageColor_;
-            Console.WriteLine(message_);
-            Console.ForegroundColor = defColor;
-        }
-
-        //------------| WARN_MESSAGE |-------------------------------------------------------------------------------------
-        private static void _warnMessage(string warnString_){
-            _distinguishMessage(warnString_, ConsoleColor.Red);
-        }
-
-        //------------| OK_MESSAGE |-------------------------------------------------------------------------------------
-        private static void _okMessage(string okString_) {
-            _distinguishMessage(okString_, ConsoleColor.Green);
-        }
-
-        //------------| ACCENT_MESSAGE |-------------------------------------------------------------------------------------
-        private static void _accentMessage(string accentMessage_){
-            _distinguishMessage(accentMessage_, ConsoleColor.Yellow);
         }
 
         #endregion
