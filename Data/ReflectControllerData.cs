@@ -46,7 +46,7 @@ namespace Angular_Utility.Data {
             }
 
             if(Path.GetFileName(servicePath) != "") {
-                ConsoleWriter.warnMessageLine("ERROR. Service path must be a path to directory, not to file");
+                ConsoleWriter.warnMessageLine("ERROR. Service path must be a path to directory, not file");
                 _isValid = false;
                 return;
             }
@@ -55,7 +55,4 @@ namespace Angular_Utility.Data {
         #endregion
     }
     #endregion
-
-    class ReflectControllerData {
-    }
 }

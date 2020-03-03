@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -100,7 +101,9 @@ namespace Angular_Utility {
         //------------| TO_VALID_PATH |-------------------------------------------------------------------------------------
         public static string toValidPath(string path_) {
             path_ = path_.Replace(@"\", "/");
-            path_ += (path_.Last() != '/') ? "/" : "";
+            if (Path.GetFileName(path_) == "") { 
+                path_ += (path_.Last() != '/') ? "/" : "";
+            }
             return path_;
         }
 

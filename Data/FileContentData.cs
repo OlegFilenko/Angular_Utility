@@ -14,7 +14,8 @@ namespace Angular_Utility.Data {
     public static class FileContentData {
         public static readonly string
             GENERATE_COMPONENT_DATA_NAME = "GenerateComponentData",
-            REFLECT_MODELS_DATA_NAME = "ReflectModelsData";
+            REFLECT_MODELS_DATA_NAME = "ReflectModelsData",
+            REFLECT_CONTROLLER_DATA_NAME = "ReflectControllerData";
         //==================================================== PUBLIC_METHODS ==================================================>
         #region Public_Methods
 
@@ -234,6 +235,17 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
                 }
             }
             return lClientFileContent;
+        }
+
+        //------------| SERVICE_CONTENT |-------------------------------------------------------------------------------------
+        private static string _serviceContent(GenerateComponentData elementData_, object data_ = null) {
+            string lServiceContent = string.Empty;
+            if (data_ != null) {
+                if (data_.GetType().Name == REFLECT_CONTROLLER_DATA_NAME) {
+                    Console.WriteLine("REFLECT_CONTROLLER_DATA_NAME OK!");
+                }
+            }
+            return lServiceContent;
         }
 
         #endregion

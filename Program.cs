@@ -53,7 +53,7 @@ namespace Angular_Utility {
                             break;
                         }
                     case NgAction.reflectController: {
-                            _reflectModels(new ReflectModelsData(lQueryData));
+                            _reflectController(new ReflectControllerData(lQueryData));
                             break;
                         }
                     case NgAction.renameComponent: {
@@ -105,13 +105,13 @@ namespace Angular_Utility {
                     _generateElement(new GenerateElementData(NgElement.model, lClientFileName, reflectModelsData_.pathTo, lFileInfo as object));
                 }
             }
-
         }
 
         //------------| REFLECT_CONTROLLER |-------------------------------------------------------------------------------------
         private static void _reflectController(ReflectControllerData reflectControllerData_) {
             if(reflectControllerData_.isValid) {
-                //_generateElement(new GenerateElementData())
+                string lName = Path.GetFileNameWithoutExtension(reflectControllerData_.controllerPath).Replace("Controller", "");
+                _generateElement(new GenerateElementData(NgElement.service, lName, reflectControllerData_.servicePath, reflectControllerData_ as object));
             }
         }
 

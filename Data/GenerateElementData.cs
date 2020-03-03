@@ -24,9 +24,6 @@ namespace Angular_Utility.Data {
         public string content { get; private set; } = string.Empty;
 
         #endregion
-        #region Private_Variables
-
-        #endregion
         //====================================================| CONSTRUCTOR |===================================================>
         #region Constructor
 
