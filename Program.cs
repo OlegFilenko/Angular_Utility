@@ -87,7 +87,8 @@ namespace Angular_Utility {
             if(!Directory.Exists(elementData_.path)) {
                 Directory.CreateDirectory(elementData_.path);
             }
-            File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
+            Console.WriteLine(elementData_.content);
+            //File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
         }
 
         //------------| REFLECT_MODELS |-------------------------------------------------------------------------------------
@@ -111,7 +112,7 @@ namespace Angular_Utility {
         private static void _reflectController(ReflectControllerData reflectControllerData_) {
             if(reflectControllerData_.isValid) {
                 string lName = Path.GetFileNameWithoutExtension(reflectControllerData_.controllerPath).Replace("Controller", "");
-                _generateElement(new GenerateElementData(NgElement.service, lName, reflectControllerData_.servicePath, reflectControllerData_ as object));
+                _generateElement(new GenerateElementData(NgElement.service, Utility.getClientFileName(lName), reflectControllerData_.servicePath, reflectControllerData_ as object));
             }
         }
 

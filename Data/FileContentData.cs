@@ -22,7 +22,7 @@ namespace Angular_Utility.Data {
         //------------| GET_CONTENT |-------------------------------------------------------------------------------------
         public static string getContent(GenerateElementData elementData_, object data_ = null) {
 
-            switch(elementData_.lType) {
+            switch(elementData_._type) {
                 case NgElement.component:
                     return _componentContent(elementData_, data_);
                 case NgElement.module:
@@ -32,7 +32,7 @@ namespace Angular_Utility.Data {
                 case NgElement.style:
                     return _styleContent(elementData_, data_);
                 case NgElement.service:
-                    break;
+                    return _serviceContent(elementData_, data_);
                 case NgElement.model:
                     return _modelContent(elementData_, data_);
                 case NgElement.directive:
@@ -54,7 +54,6 @@ namespace Angular_Utility.Data {
                 case NgElement.ngInterface:
                     break;
             }
-
             return "";
         }
 
@@ -238,14 +237,57 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
         }
 
         //------------| SERVICE_CONTENT |-------------------------------------------------------------------------------------
-        private static string _serviceContent(GenerateComponentData elementData_, object data_ = null) {
-            string lServiceContent = string.Empty;
+        private static string _serviceContent(GenerateElementData elementData_, object data_ = null) {
+            string 
+                lRoute = string.Empty,
+                lServiceMethods = string.Empty;
             if (data_ != null) {
                 if (data_.GetType().Name == REFLECT_CONTROLLER_DATA_NAME) {
-                    Console.WriteLine("REFLECT_CONTROLLER_DATA_NAME OK!");
+                    ReflectControllerData lControllerData = data_ as ReflectControllerData;
+                    string lControllerContent = File.ReadAllText(lControllerData.controllerPath);
+                    int lIndex = 0;
+
+                    lRoute = Utility.findSubstring(lControllerContent, "[Route(\"", "\")]", ref lIndex).Replace("api/", "");
+                    string
+                        lControllerName = Utility.findSubstring(lControllerContent, "public class ", "Controller", ref lIndex);
+                    lRoute = (lRoute.IndexOf("[controller]") != -1) ? lRoute.Replace("[controller]", lControllerName) : lRoute;
+                    do {
+                        string lMethodHead = Utility.findSubstring(lControllerContent, "[Ht", "{", ref lIndex).Replace("  ", " ");
+                        if (lIndex != -1) {
+                            int lMHeadIndex = 0;
+                            string[] lHttpRequestParts = Utility.findSubstring(lMethodHead, "tp", "\")]", ref lMHeadIndex).Split('"');
+                            string 
+                                lHttpRequestType  = lHttpRequestParts[0].Replace("(", "").ToLower(),
+                                lHttpRequestValue = lHttpRequestParts[1];
+                            string[] lMethodHeadNameArr = Utility.findSubstring(lMethodHead, "public ", "(", ref lMHeadIndex).Split(' ');
+                            string 
+                                lResponseType = Utility.getClientDataType(lMethodHeadNameArr[0], out bool optional1),
+                                lMethodName = Utility.getClientName(lMethodHeadNameArr[1]);
+                            string[] lMethodRequestTypeArr = Utility.findSubstring(lMethodHead, "[FromBody]", ")", ref lMHeadIndex).Replace("[Required]", "").Trim().Split(' ');
+                            string lRequestType = Utility.getClientDataType(lMethodRequestTypeArr[0], out bool optional2);
+
+                            lHttpRequestValue = (lHttpRequestValue == "[action]") ? lMethodHeadNameArr[1] : lHttpRequestValue;
+
+                            lServiceMethods += $@"  {lMethodName}(stringKey: string, data: {lRequestType}): Observable<{lResponseType}> {{
+    return this.http.{lHttpRequestType}<{lResponseType}>(`${{this.controller}}/{lHttpRequestValue}`, data, this.getHttpOptions(stringKey));
+  }}"+"\n\n";
+                        }
+                    } while (lIndex != -1);
                 }
             }
-            return lServiceContent;
+            return $@"
+@Injectable()
+export class {Utility.getExportName(elementData_.name.Replace(".ts", ""))} {{
+  private readonly controller = `${{environment.api}}{lRoute}`;
+
+  constructor(private readonly http: HttpClient) {{ }}
+
+  private getHttpOptions(modelStringKey: string) {{
+    return {{ headers: new HttpHeaders({{ 'ModelStringKey': modelStringKey }}) }};
+  }}
+    
+{lServiceMethods}
+}}";
         }
 
         #endregion

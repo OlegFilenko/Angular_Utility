@@ -50,7 +50,7 @@ namespace Angular_Utility {
 
         //------------| GET_EXPORT_NAME |-------------------------------------------------------------------------------------
         public static string getExportName(string name_) {
-            string[] lNamesParts = name_.Split('-');
+            string[] lNamesParts = name_.Split(new char[] { '-', '.' });
             for(int i = 0; i < lNamesParts.Length; i++) {
                 string lPart = lNamesParts[i];
                 lPart = lPart[0].ToString().ToUpper() + lPart.Substring(1);
@@ -61,7 +61,6 @@ namespace Angular_Utility {
 
         //------------| GET_CLIENT_DATA_NAME |-------------------------------------------------------------------------------------
         public static string getClientName(string value_) {
-            value_ = value_.Trim();
             string firstLeter = value_[0].ToString().ToLower();
             return (firstLeter + value_.Substring(1));
         }
@@ -93,7 +92,7 @@ namespace Angular_Utility {
                     lDataType = value_;
                 }
             }
-            isOptional_ = (value_[value_.Length - 1] == '?');
+            isOptional_ = (value_.Last() == '?');
 
             return lDataType;
         }
@@ -105,6 +104,20 @@ namespace Angular_Utility {
                 path_ += (path_.Last() != '/') ? "/" : "";
             }
             return path_;
+        }
+
+        //------------| FIND_SUBSTRING |-------------------------------------------------------------------------------------
+        public static string findSubstring(string source_, string start_, string end_, ref int index_) {
+            string lResult = "";
+            index_ = source_.IndexOf(start_, index_);
+            if (index_ != -1) {
+                index_ += start_.Length;
+                int lEndIndex = source_.IndexOf(end_, index_);
+                lResult = source_.Substring(index_, lEndIndex - index_);
+                index_ = lEndIndex;
+            }
+
+            return lResult;
         }
 
         #endregion

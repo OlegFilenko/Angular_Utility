@@ -19,7 +19,7 @@ namespace Angular_Utility.Data {
             name,
             path;
 
-        public readonly NgElement lType;
+        public readonly NgElement _type;
 
         public string content { get; private set; } = string.Empty;
 
@@ -50,18 +50,18 @@ namespace Angular_Utility.Data {
 
         public GenerateElementData(QueryData queryData_) {
             if(queryData_.dataDictionary.TryGetValue("type", out string lType)) {
-                this.lType = (NgElement)Enum.Parse(typeof(NgElement), lType);
+                _type = (NgElement)Enum.Parse(typeof(NgElement), lType);
             } else {
-                this.lType = NgElement.component;
+                _type = NgElement.component;
             }
-            name = queryData_.getValue("name") + _extensionDictionary[this.lType];
+            name = queryData_.getValue("name") + _extensionDictionary[this._type];
             path = Utility.toValidPath(queryData_.getValue("path"));
             _generateContent();
         }
 
         public GenerateElementData(NgElement type_, string name_, string path_, object data_ = null) {
-            lType = type_;
-            name = name_ + _extensionDictionary[lType];
+            _type = type_;
+            name = name_ + _extensionDictionary[_type];
             path = path_;
             _generateContent(data_);
         }
