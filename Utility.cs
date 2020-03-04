@@ -44,7 +44,6 @@ namespace Angular_Utility {
         }
 
         #endregion
-
         //==================================================== PUBLIC_METHODS ==================================================>
         #region Public_Methods
 

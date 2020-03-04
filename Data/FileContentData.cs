@@ -263,13 +263,22 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
                             string 
                                 lResponseType = Utility.getClientDataType(lMethodHeadNameArr[0], out bool optional1),
                                 lMethodName = Utility.getClientName(lMethodHeadNameArr[1]);
-                            string[] lMethodRequestTypeArr = Utility.findSubstring(lMethodHead, "[FromBody]", ")", ref lMHeadIndex).Replace("[Required]", "").Trim().Split(' ');
-                            string lRequestType = Utility.getClientDataType(lMethodRequestTypeArr[0], out bool optional2);
+
+                            string
+                                lData = "",
+                                lDataWithType = "";
+
+                            if (lHttpRequestType == "post" || lHttpRequestType == "put") {
+                                string[] lMethodRequestTypeArr = Utility.findSubstring(lMethodHead, "[FromBody]", ")", ref lMHeadIndex).Replace("[Required]", "").Trim().Split(' ');
+                                string lRequestType = Utility.getClientDataType(lMethodRequestTypeArr[0], out bool optional2);
+                                lData = ", data";
+                                lDataWithType = $", data: {lRequestType}";
+                            }
 
                             lHttpRequestValue = (lHttpRequestValue == "[action]") ? lMethodHeadNameArr[1] : lHttpRequestValue;
 
-                            lServiceMethods += $@"  {lMethodName}(stringKey: string, data: {lRequestType}): Observable<{lResponseType}> {{
-    return this.http.{lHttpRequestType}<{lResponseType}>(`${{this.controller}}/{lHttpRequestValue}`, data, this.getHttpOptions(stringKey));
+                            lServiceMethods += $@"  {lMethodName}(stringKey: string{lDataWithType}): Observable<{lResponseType}> {{
+    return this.http.{lHttpRequestType}<{lResponseType}>(`${{this.controller}}/{lHttpRequestValue}`{lData}, this.getHttpOptions(stringKey));
   }}"+"\n\n";
                         }
                     } while (lIndex != -1);
