@@ -238,6 +238,7 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
 
         //------------| SERVICE_CONTENT |-------------------------------------------------------------------------------------
         private static string _serviceContent(GenerateElementData elementData_, object data_ = null) {
+            bool lLocalImport = false;
             string 
                 lRoute = string.Empty,
                 lServiceMethods = string.Empty;
@@ -284,9 +285,15 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
                     } while (lIndex != -1);
                 }
             }
+
+            string lName = Utility.getExportName(elementData_.name.Replace(".ts", ""));
+
+            if(lLocalImport) {
+            } else {
+            }
             return $@"
 @Injectable()
-export class {Utility.getExportName(elementData_.name.Replace(".ts", ""))} {{
+export class {lName} {{
   private readonly controller = `${{environment.api}}{lRoute}`;
 
   constructor(private readonly http: HttpClient) {{ }}

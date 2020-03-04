@@ -10,9 +10,19 @@ namespace Angular_Utility {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     #region class Utility
     public static class Utility {
+        //=================================================== PRIVATE_VARIABLES ================================================>
+        #region Private_Variables
+
+        private static string _projectPath = string.Empty;
+
+        #endregion
+        //=================================================== PUBLIC_VARIABLES =================================================>
+        #region Public_Variables
 
         public static IReadOnlyDictionary<string, string> typeСonversionDict;
+        public static string projectPath => _projectPath;
 
+        #endregion
         //====================================================| CONSTRUCTOR |===================================================>
         #region Cunstructor
 
@@ -41,6 +51,10 @@ namespace Angular_Utility {
             lTypeDict["DateTime?"] = "Date";
 
             typeСonversionDict = lTypeDict;
+
+            _projectPath = File.ReadAllLines("Projects")[0];
+            ConsoleWriter.accentMessageLine(_projectPath);
+            _projectPath += "/ClientApp/src/app/";
         }
 
         #endregion
@@ -118,6 +132,33 @@ namespace Angular_Utility {
 
             return lResult;
         }
+
+        //------------| SET_TO_MODULE |-------------------------------------------------------------------------------------
+        public static void setToMOdule(string modulePath_, string setName_, params string[] names_) {
+            if(!File.Exists(_projectPath + modulePath_)) {
+                ConsoleWriter.warnMessageLine($"ERROR. Module {modulePath_} not exists");
+                return;
+            }
+
+            string
+                lModuleContent = File.ReadAllText(projectPath + modulePath_),
+                lBlock = Regex.Match(lModuleContent, $"{setName_}?[ ]*:?[ ]*[\\[][ \n\r\t:_{}a-z,]*[\\]]", RegexOptions.IgnoreCase).Value,
+                lBlockEnd = Regex.Match(lModuleContent, "[\n\t\r ]*\\]").Value,
+                lInsert = string.Empty;
+
+            foreach(string name_ in names_) {
+                if(lBlock.IndexOf(name_) != -1) {
+                    lInsert += ",\n    " + name_;
+                }
+            }
+
+            string lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd);
+
+            lModuleContent.Replace(lBlock, lNewBlock);
+
+            //File.WriteAllText(projectPath + modulePath_, lModuleContent);
+        }
+
 
         #endregion
 

@@ -11,20 +11,11 @@ namespace Angular_Utility {
     #region class Program
 
     class Program {
-        //=================================================== PRIVATE_VARIABLES ================================================>
-        #region Private_Variables
-
-        private static string
-            _projectPath = string.Empty;
-
-        #endregion
         //==================================================== PUBLIC_METHODS ==================================================>
         #region Public_Methods
 
         static void Main(string[] args) {
-            _projectPath = File.ReadAllLines("Projects")[0];
-            ConsoleWriter.accentMessageLine(_projectPath);
-            _projectPath += "/ClientApp/src/app/";
+
             _processingRequest();
         }
 
@@ -87,7 +78,7 @@ namespace Angular_Utility {
             if(!Directory.Exists(elementData_.path)) {
                 Directory.CreateDirectory(elementData_.path);
             }
-            Console.WriteLine(elementData_.content);
+            //Console.WriteLine(elementData_.content);
             //File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
         }
 
