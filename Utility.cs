@@ -133,8 +133,17 @@ namespace Angular_Utility {
             return lResult;
         }
 
+        //------------| SET_TO_APP_MODULE |-------------------------------------------------------------------------------------
+        public static void setToAppModule(string setName_, string name_) {
+            setToModule("app.module.ts", setName_, name_);
+        }
+
         //------------| SET_TO_MODULE |-------------------------------------------------------------------------------------
-        public static void setToMOdule(string modulePath_, string setName_, params string[] names_) {
+        public static void setToModule(string modulePath_, string setName_, string name_) {
+            setToModule(modulePath_, setName_, new string[] { name_ });
+        }
+
+        public static void setToModule(string modulePath_, string setName_, params string[] names_) {
             if(!File.Exists(_projectPath + modulePath_)) {
                 ConsoleWriter.warnMessageLine($"ERROR. Module {modulePath_} not exists");
                 return;
@@ -142,26 +151,26 @@ namespace Angular_Utility {
 
             string
                 lModuleContent = File.ReadAllText(projectPath + modulePath_),
-                lBlock = Regex.Match(lModuleContent, $"{setName_}?[ ]*:?[ ]*[\\[][ \n\r\t:_{}a-z,]*[\\]]", RegexOptions.IgnoreCase).Value,
+                lBlock = Regex.Match(lModuleContent, setName_ + "?[ ]*:?[ ]*[\\[][ \n\r\t:_{}a-z,]*[\\]]", RegexOptions.IgnoreCase).Value,
                 lBlockEnd = Regex.Match(lModuleContent, "[\n\t\r ]*\\]").Value,
                 lInsert = string.Empty;
 
-            foreach(string name_ in names_) {
-                if(lBlock.IndexOf(name_) != -1) {
-                    lInsert += ",\n    " + name_;
+            if (lBlock != "") { 
+                foreach(string name_ in names_) {
+                    if(lBlock.IndexOf(name_) != -1) {
+                        lInsert += ",\n    " + name_;
+                    }
                 }
+
+                string lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd);
+
+                lModuleContent.Replace(lBlock, lNewBlock);
+
+                //File.WriteAllText(projectPath + modulePath_, lModuleContent);
             }
 
-            string lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd);
-
-            lModuleContent.Replace(lBlock, lNewBlock);
-
-            //File.WriteAllText(projectPath + modulePath_, lModuleContent);
         }
-
-
         #endregion
-
     }
     #endregion
 }
