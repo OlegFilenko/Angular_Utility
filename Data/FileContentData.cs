@@ -239,7 +239,7 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
         //------------| SERVICE_CONTENT |-------------------------------------------------------------------------------------
         private static string _serviceContent(GenerateElementData elementData_, object data_ = null) {
             bool lLocalImport = false;
-            string 
+            string
                 lRoute = string.Empty,
                 lServiceMethods = string.Empty;
             if (data_ != null) {
@@ -288,8 +288,11 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
 
             string lName = Utility.getExportName(elementData_.name.Replace(".ts", ""));
 
+            string lServicePath = elementData_.path + lName;
+
             if(lLocalImport) {
             } else {
+                Utility.setToAppModule("providers", lServicePath, "TEST");
             }
             return $@"
 @Injectable()

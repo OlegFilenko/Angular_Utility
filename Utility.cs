@@ -134,16 +134,16 @@ namespace Angular_Utility {
         }
 
         //------------| SET_TO_APP_MODULE |-------------------------------------------------------------------------------------
-        public static void setToAppModule(string setName_, string name_) {
-            setToModule("app.module.ts", setName_, name_);
+        public static void setToAppModule(string setName_, string filePath_, string name_) {
+            setToModule("app.module.ts", setName_, filePath_, name_);
         }
 
         //------------| SET_TO_MODULE |-------------------------------------------------------------------------------------
-        public static void setToModule(string modulePath_, string setName_, string name_) {
-            setToModule(modulePath_, setName_, new string[] { name_ });
+        public static void setToModule(string modulePath_, string setName_, string filePath_, string name_) {
+            setToModule(modulePath_, setName_, filePath_, new string[] { name_ });
         }
 
-        public static void setToModule(string modulePath_, string setName_, params string[] names_) {
+        public static void setToModule(string modulePath_, string setName_, string filePath_, params string[] names_) {
             if(!File.Exists(_projectPath + modulePath_)) {
                 ConsoleWriter.warnMessageLine($"ERROR. Module {modulePath_} not exists");
                 return;
@@ -152,23 +152,42 @@ namespace Angular_Utility {
             string
                 lModuleContent = File.ReadAllText(projectPath + modulePath_),
                 lBlock = Regex.Match(lModuleContent, setName_ + "?[ ]*:?[ ]*[\\[][ \n\r\t:_{}a-z,]*[\\]]", RegexOptions.IgnoreCase).Value,
-                lBlockEnd = Regex.Match(lModuleContent, "[\n\t\r ]*\\]").Value,
-                lInsert = string.Empty;
+                lBlockEnd = Regex.Match(lModuleContent, "[\n\t\r ]*\\]").Value;
 
-            if (lBlock != "") { 
-                foreach(string name_ in names_) {
-                    if(lBlock.IndexOf(name_) != -1) {
+            if (lBlock != "") {
+                string
+                    lInsert = string.Empty,
+                    lImportInserts = string.Empty;
+
+                foreach (string name_ in names_) {
+                    if(lBlock.IndexOf(name_) == -1) {
                         lInsert += ",\n    " + name_;
+                        lImportInserts += $"\nimport {{ {name_} }} from './services/billing/document-workflow.service';";
                     }
                 }
 
-                string lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd);
+                if (lInsert != "") {
 
-                lModuleContent.Replace(lBlock, lNewBlock);
+                    string lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd);
 
-                //File.WriteAllText(projectPath + modulePath_, lModuleContent);
+                    string lImports = Regex.Match(lModuleContent, "import[ ]*{[a-z0-9}{'@/;\n\r\t,_ -.]*(export|@NgModule)", RegexOptions.IgnoreCase).Value;
+                    List<string> lImportsList = new List<string>();
+                    string[] lLineList = lImports.Split('\n');
+                    for (int i = 0; i < lLineList.Length; i++){
+                        string lLine = lLineList[i].Trim();
+                        if (Regex.IsMatch(lLine, "^import")) {
+                            lImportsList.Add(lLine);
+                        }
+                    }
+                    lImports = string.Join("\n", lImportsList.ToArray());
+
+
+                    lModuleContent.Replace(lBlock, lNewBlock);
+                    System.Console.WriteLine(lImports);
+                    //File.WriteAllText(projectPath + modulePath_, lModuleContent);
+
+                }
             }
-
         }
         #endregion
     }
