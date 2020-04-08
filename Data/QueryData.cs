@@ -27,6 +27,7 @@ namespace Angular_Utility.Data {
         private readonly string
 
             _generateComponentPattern = "(generate[-|_]component|gen[-|_]component|g[-|_]component|gen[-|_]comp|g[-|_]comp)",
+            _generateDirectivePattern = "(generate[-|_]directive|gen[-|_]directive|g[-|_]directive|gen[-|_]dir|g[-|_]dir)",
             _generateElementPattern = "(generate[-|_]element|gen[-|_]element|g[-|_]element|gen[-|_]el|g[-|_]el)",
             _deleteComponentPattern = "(remove[-|_]component|rem[-|_]component|rm[-|_]component|rem[-|_]comp|rm[-|_]comp)",
             _renameComponentPattern = "(rename[-|_]component|ren[-|_]component|rn[-|_]component|ren[-|_]comp|rn[-|_]comp)",
@@ -59,6 +60,9 @@ namespace Angular_Utility.Data {
 
             if(Regex.IsMatch(lAction, _generateComponentPattern)) {
                 actionType = NgAction.generateComponent;
+                return;
+            } else if(Regex.IsMatch(lAction, _generateDirectivePattern)) {
+                actionType = NgAction.generateDirective;
                 return;
             } else if(Regex.IsMatch(lAction, _generateElementPattern)) {
                 actionType = NgAction.generateElement;

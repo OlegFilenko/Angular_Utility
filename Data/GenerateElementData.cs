@@ -1,6 +1,6 @@
-﻿using Angular_Utility.Enums;
+﻿using Angular_Utility.Dictionaries;
+using Angular_Utility.Enums;
 using System;
-using System.Collections.Generic;
 
 namespace Angular_Utility.Data {
 
@@ -12,8 +12,6 @@ namespace Angular_Utility.Data {
     public sealed class GenerateElementData {
         //=================================================== PUBLIC_VARIABLES =================================================>
         #region Public_Variables
-
-        private static IReadOnlyDictionary<NgElement, string> _extensionDictionary;
 
         public readonly string
             name,
@@ -27,41 +25,20 @@ namespace Angular_Utility.Data {
         //====================================================| CONSTRUCTOR |===================================================>
         #region Constructor
 
-        static GenerateElementData() {
-            Dictionary<NgElement, string> lDict = new Dictionary<NgElement, string>();
-            lDict[NgElement.component] = ".component.ts";
-            lDict[NgElement.html] = ".component.html";
-            lDict[NgElement.style] = ".component.scss";
-            lDict[NgElement.module] = ".module.ts";
-            lDict[NgElement.moduleRouting] = "-routing.module.ts";
-            lDict[NgElement.model] = ".model.ts";
-            lDict[NgElement.service] = ".service.ts";
-            lDict[NgElement.directive] = ".directive.ts";
-            lDict[NgElement.validator] = ".validator.ts";
-            lDict[NgElement.guard] = ".guard.ts";
-            lDict[NgElement.interceptor] = ".interceptor.ts";
-            lDict[NgElement.animation] = ".animation.ts";
-            lDict[NgElement.ngEnum] = ".enum.ts";
-            lDict[NgElement.ngClass] = ".ts";
-            lDict[NgElement.ngInterface] = ".ts";
-
-            _extensionDictionary = lDict;
-        }
-
         public GenerateElementData(QueryData queryData_) {
             if(queryData_.dataDictionary.TryGetValue("type", out string lType)) {
                 _type = (NgElement)Enum.Parse(typeof(NgElement), lType);
             } else {
                 _type = NgElement.component;
             }
-            name = queryData_.getValue("name") + _extensionDictionary[this._type];
-            path = Utility.toValidPath(queryData_.getValue("path"));
+            name = queryData_.getValue("name") + ExtensionDict.value(_type);
+            path = Utility.normalisePath(queryData_.getValue("path", true),true);
             _generateContent();
         }
 
         public GenerateElementData(NgElement type_, string name_, string path_, object data_ = null) {
             _type = type_;
-            name = name_ + _extensionDictionary[_type];
+            name = name_ + ExtensionDict.value(_type);
             path = path_;
             _generateContent(data_);
         }

@@ -1,4 +1,5 @@
 ﻿using Angular_Utility.Data;
+using Angular_Utility.Dictionaries;
 using Angular_Utility.Enums;
 using System;
 using System.IO;
@@ -15,13 +16,20 @@ namespace Angular_Utility {
         #region Public_Methods
 
         static void Main(string[] args) {
-
+            _initialize();
             _processingRequest();
         }
 
         #endregion
         //===================================================== PRIVATE_METHODS ================================================>
         #region Private_Methods
+
+        //------------| INITIALIZE_DICTIONARIES |-------------------------------------------------------------------------------------
+        private static void _initialize() {
+            TypeСonversionDict.init();
+            ExtensionDict.init();
+            Utility.init();
+        }
 
         //------------| PROCESSING_REQUEST |-------------------------------------------------------------------------------------
         private static void _processingRequest() {
@@ -33,6 +41,10 @@ namespace Angular_Utility {
                 switch(lQueryData.actionType) {
                     case NgAction.generateComponent: {
                             _generateComponent(new GenerateComponentData(lQueryData));
+                            break;
+                        }
+                    case NgAction.generateDirective: {
+                            _generateDirective(new GenerateDirectiveData(lQueryData));
                             break;
                         }
                     case NgAction.generateElement: {
@@ -70,6 +82,18 @@ namespace Angular_Utility {
                 foreach(NgElement element in componentData_.elementsSet) {
                     _generateElement(new GenerateElementData(element, componentData_.name, componentData_.path, componentData_ as object));
                 }
+                if(componentData_.type == NgComponent.page) {
+                    Utility.setToAppRouting(componentData_.path + componentData_.name + ExtensionDict.value(NgElement.module));
+                }
+            }
+        }
+
+        //------------| GENERATE_DIRECTIVE |-------------------------------------------------------------------------------------
+        private static void _generateDirective(GenerateDirectiveData directiveData_) {
+            if(directiveData_.isValid) {
+                foreach(NgElement element in directiveData_.elements) {
+                    _generateElement(new GenerateElementData(element, directiveData_.name, directiveData_.path, directiveData_ as object));
+                }
             }
         }
 
@@ -78,8 +102,7 @@ namespace Angular_Utility {
             if(!Directory.Exists(elementData_.path)) {
                 Directory.CreateDirectory(elementData_.path);
             }
-            //Console.WriteLine(elementData_.content);
-            //File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
+            File.WriteAllText(elementData_.path + elementData_.name, elementData_.content);
         }
 
         //------------| REFLECT_MODELS |-------------------------------------------------------------------------------------

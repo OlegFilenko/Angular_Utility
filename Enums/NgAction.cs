@@ -8,6 +8,7 @@
     public enum NgAction {
         generateComponent,
         generateElement,
+        generateDirective,
         renameComponent,
         deleteComponent,
         generateModel,

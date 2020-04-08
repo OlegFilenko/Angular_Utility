@@ -1,6 +1,7 @@
 ﻿using Angular_Utility.Enums;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Angular_Utility.Data {
 
@@ -16,7 +17,7 @@ namespace Angular_Utility.Data {
         public readonly string
             name,
             path,
-            parent;
+            parentModule;
 
         public readonly bool
             flat,
@@ -54,19 +55,23 @@ namespace Angular_Utility.Data {
                 return;
             }
 
-            path = Utility.toValidPath(path);
+            path = Utility.projectPath + Utility.normalisePath(path, true);
 
-            if(queryData_.dataDictionary.TryGetValue("parent", out string lParent)) {
-                parent = lParent;
+            if(queryData_.dataDictionary.TryGetValue("parentModule", out string lParent)) {
+                parentModule = Utility.normalisePath(lParent);
             } else {
-                parent = "";
+                parentModule = "";
             }
 
             if(queryData_.dataDictionary.TryGetValue("type", out string lType)) {
                 type = (NgComponent)Enum.Parse(typeof(NgComponent), lType);
+                if(type == NgComponent.dialog && parentModule != "") {
+                    Utility.setToModule(parentModule, "imports", path, name);
+                }
             } else {
                 type = NgComponent.component;
             }
+
 
             flat = queryData_.getBooleanValue("flat");
             settingStore = queryData_.getBooleanValue("settingStore");

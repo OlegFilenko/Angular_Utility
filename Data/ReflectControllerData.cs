@@ -36,8 +36,8 @@ namespace Angular_Utility.Data {
                 return;
             }
 
-            controllerPath = Utility.toValidPath(controllerPath);
-            servicePath = Utility.toValidPath(servicePath);
+            controllerPath = Utility.normalisePath(controllerPath);
+            servicePath = Utility.normalisePath(servicePath);
 
             if(!File.Exists(controllerPath)) {
                 ConsoleWriter.warnMessageLine("ERROR. Incorrect controller path");

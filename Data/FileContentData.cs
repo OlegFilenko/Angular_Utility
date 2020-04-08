@@ -14,6 +14,7 @@ namespace Angular_Utility.Data {
     public static class FileContentData {
         public static readonly string
             GENERATE_COMPONENT_DATA_NAME = "GenerateComponentData",
+            GENERATE_DIRECTIVE_DATA_NAME = "GenerateDirectiveData",
             REFLECT_MODELS_DATA_NAME = "ReflectModelsData",
             REFLECT_CONTROLLER_DATA_NAME = "ReflectControllerData";
         //==================================================== PUBLIC_METHODS ==================================================>
@@ -35,10 +36,10 @@ namespace Angular_Utility.Data {
                     return _serviceContent(elementData_, data_);
                 case NgElement.model:
                     return _modelContent(elementData_, data_);
-                case NgElement.directive:
-                    break;
                 case NgElement.moduleRouting:
-                    break;
+                    return _moduleRoutingContent(elementData_, data_);
+                case NgElement.directive:
+                    return _directiveContent(elementData_, data_);
                 case NgElement.validator:
                     break;
                 case NgElement.guard:
@@ -73,7 +74,9 @@ namespace Angular_Utility.Data {
                 lConstructorBody = "",
                 lOnInit = "",
                 lVariables = "",
-                lComponentDecorator = "";
+                lComponentDecorator = "",
+                lName = elementData_.name.Replace(Dictionaries.ExtensionDict.value(NgElement.component), ""),
+                lExportName = Utility.getExportName(lName);
 
             bool isAbstract = false;
 
@@ -85,11 +88,11 @@ namespace Angular_Utility.Data {
                     if(lComponentData.type == NgComponent.dialog) {
                         lAngularCore = ", Injector, Inject";
                         lExtends = "extends DialogAbstractDefaultsComponent";
-                        lInjections = "\n    @Inject(MAT_DIALOG_DATA) protected defaults: any\n    protected readonly injector: Injector";
+                        lInjections = "\n    @Inject(MAT_DIALOG_DATA) protected defaults: any,\n    protected readonly injector: Injector";
                         lConstructorBody = "\n    super(defaults, injector);";
                         lOnInit = "\n    super.ngOnInit()";
-                        lVariables = "  icon: string = 'info',\n  title: string = 'Инфо';";
-                        lImports = "\nimport { MAT_DIALOG_DATA } from '@angular/material';";
+                        lVariables = "  icon: string = 'info';\n  title: string = 'Инфо';";
+                        lImports = "\nimport { MAT_DIALOG_DATA } from '@angular/material';\nimport { DialogAbstractDefaultsComponent } from 'app/shared/dialog-window/dialog-abstract-defaults.component';";
                         lImplements = "";
                     }
 
@@ -100,18 +103,19 @@ namespace Angular_Utility.Data {
                     }
 
                     lComponentDecorator = (!isAbstract) ? $@"@Component({{
-        selector:'{elementData_.name}',
-        templateUrl:'./{elementData_.name}.component.html',
-        styleUrls: ['./{elementData_.name}.component.scss']
-    }})" : "";
+  selector:'{lName}',
+  templateUrl:'./{lName}.component.html',
+  styleUrls: ['./{lName}.component.scss']
+}})" : "";
                 }
             }
 
             return $@"import {{ Component{lAngularCore} }} from '@angular/core';{lImports}
 
 {lComponentDecorator}
-export class {Utility.getExportName(elementData_.name)}Component {lExtends}{lImplements} {{
+export class {lExportName}Component {lExtends}{lImplements} {{
 {lVariables}
+
   constructor({lInjections}
   ) {{{lConstructorBody}
   }}
@@ -125,49 +129,58 @@ export class {Utility.getExportName(elementData_.name)}Component {lExtends}{lImp
         //------------| MODULE_CONTENT |-------------------------------------------------------------------------------------
         private static string _moduleContent(GenerateElementData elementData_, object data_ = null) {
             string
-                lImports = "",
                 lModuleImports = "",
                 lModuleExports = "",
-                lParams = "";
+                lParams = "",
+                lName = elementData_.name.Replace(Dictionaries.ExtensionDict.value(NgElement.module), ""),
+                lExportName = Utility.getExportName(lName),
+                lImports = $@"
+import {{ {lExportName}Component }} from './{lName}.component';";
 
             if(data_ != null) {
                 if(data_.GetType().Name == GENERATE_COMPONENT_DATA_NAME) {
                     GenerateComponentData lComponentData = data_ as GenerateComponentData;
-                    string
-                        lParamsBlock = $@"
-    declarations: [{Utility.getExportName(lComponentData.name)}Component],
-    entryComponents: [{Utility.getExportName(lComponentData.name)}Component],
-    exports: [{Utility.getExportName(lComponentData.name)}Component]";
+                    lParams = $@",
+  declarations: [{lExportName}Component],
+  entryComponents: [{lExportName}Component],
+  exports: [{lExportName}Component]";
 
                     if(lComponentData.type == NgComponent.dialog) {
-                        lImports = $@"import {{ CommonModule }} from '@angular/common';
-import {{ {Utility.getExportName(lComponentData.name)} }} from './{lComponentData.name}.component';
-import {{ FormsModule }} from '@angular/forms';";
+                        lImports += $@"
+import {{ FormsModule }} from '@angular/forms';
+import {{ MaterialModule }} from 'app/shared/material-components.module';
+import {{ DialogWindowModule }} from 'app/shared/dialog-window/dialog-window.module';";
 
                         lModuleImports = $@",
-        MaterialModule,
-        FormsModule, 
-        DialogWindowModule";
-                        lParams = lParamsBlock;
+    MaterialModule,
+    FormsModule, 
+    DialogWindowModule";
                     }
 
                     if(lComponentData.type == NgComponent.page) {
-                        lParams = lParamsBlock;
                     }
+                }
+                if(data_.GetType().Name == GENERATE_DIRECTIVE_DATA_NAME) {
+                    GenerateDirectiveData lDirectiveData = data_ as GenerateDirectiveData;
+                    lImports = $@"
+import {{ {lExportName}Directive }} from './{lName}.directive';";
+
+                    lParams = $@",
+  declarations: [{lExportName}Directive],
+  exports: [{lExportName}Directive]";
                 }
             }
 
             return $@"import {{ NgModule }} from '@angular/core';
+import {{ CommonModule }} from '@angular/common';
 {lImports}
 
 @NgModule({{
-    imports: [
-        CommonModule{lModuleImports}
-    ],
-    {lModuleExports}
-    {lParams}
+  imports: [
+    CommonModule{lModuleImports}
+  ]{lModuleExports}{lParams}
 }})
-export class {Utility.getExportName(elementData_.name)}Module {{ }}";
+export class {lExportName}Module {{ }}";
         }
 
         //------------| HTML_CONTENT |-------------------------------------------------------------------------------------
@@ -182,7 +195,7 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
                 }
             }
             return $@"<p>
-  {elementData_.name} html work!
+  {elementData_.name.Replace(Dictionaries.ExtensionDict.value(NgElement.html), "")} work!
 </p>";
 
         }
@@ -288,11 +301,11 @@ export class {Utility.getExportName(elementData_.name)}Module {{ }}";
 
             string lName = Utility.getExportName(elementData_.name.Replace(".ts", ""));
 
-            string lServicePath = elementData_.path + lName;
+            string lServicePath = elementData_.path + elementData_.name;
 
             if(lLocalImport) {
             } else {
-                Utility.setToAppModule("providers", lServicePath, "TEST");
+                Utility.setToAppModule("providers", lServicePath, lName);
             }
             return $@"
 @Injectable()
@@ -307,6 +320,64 @@ export class {lName} {{
     
 {lServiceMethods}
 }}";
+        }
+
+        //------------| MODULE_ROUTING_CONTENT |-------------------------------------------------------------------------------------
+        private static string _moduleRoutingContent(GenerateElementData elementData_, object data_ = null) {
+            string 
+                lRoutes = string.Empty,
+                lImports = string.Empty,
+                lName = elementData_.name.Replace(Dictionaries.ExtensionDict.value(NgElement.moduleRouting), ""),
+                lExportName = Utility.getExportName(lName);
+            ;
+            if(data_ != null) {
+                if(data_.GetType().Name == GENERATE_COMPONENT_DATA_NAME) {
+                    lRoutes = $@"
+  {{
+    path: '',
+    component: {lExportName}Component
+  }}
+";
+                    lImports = $@"import {{ {lExportName}Component }} from './{lName}.component';";
+                }
+            }
+            return $@"import {{ NgModule }} from '@angular/core';
+import {{ Routes,RouterModule }} from '@angular/router';
+{lImports}
+
+const routes: Routes = [{lRoutes}];
+
+@NgModule({{
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule]
+}})
+export class {lExportName}RoutingModule {{ }}
+";
+        }
+
+        //------------| DIRECTIVE_CONTENT |-------------------------------------------------------------------------------------
+        private static string _directiveContent(GenerateElementData elementData_, object data_ = null) {
+            string
+                lName = elementData_.name.Replace(Dictionaries.ExtensionDict.value(NgElement.directive), ""),
+                lExportName = Utility.getExportName(lName);
+            if(data_ != null) {
+                if(data_.GetType().Name == GENERATE_DIRECTIVE_DATA_NAME) {
+
+                }
+            }
+
+            return $@"import {{ Directive,ElementRef, HostListener }} from '@angular/core';
+
+@Directive({{
+  selector: '[directive_selector_name_must_be_changed]',
+}})
+export class {lExportName}Directive {{ 
+
+  constructor(private element: ElementRef) {{
+  }}
+
+}}
+";
         }
 
         #endregion

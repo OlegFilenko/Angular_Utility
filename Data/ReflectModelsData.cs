@@ -38,8 +38,8 @@ namespace Angular_Utility.Data {
                 return;
             }
 
-            pathFrom = Utility.toValidPath(pathFrom);
-            pathTo = Utility.toValidPath(pathTo);
+            pathFrom = Utility.normalisePath(pathFrom);
+            pathTo = Utility.normalisePath(pathTo, true);
 
             if(!Directory.Exists(pathFrom)) {
                 if(!File.Exists(pathFrom)) {
