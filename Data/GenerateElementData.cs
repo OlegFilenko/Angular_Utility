@@ -32,7 +32,7 @@ namespace Angular_Utility.Data {
                 _type = NgElement.component;
             }
             name = queryData_.getValue("name") + ExtensionDict.value(_type);
-            path = Utility.normalisePath(queryData_.getValue("path", true),true);
+            path = Utility.projectPath + Utility.normalisePath(queryData_.getValue("path", true),true);
             _generateContent();
         }
 

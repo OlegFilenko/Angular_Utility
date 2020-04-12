@@ -59,6 +59,11 @@ namespace Angular_Utility.Data {
 
             if(queryData_.dataDictionary.TryGetValue("parentModule", out string lParent)) {
                 parentModule = Utility.normalisePath(lParent);
+                if (parentModule != "auto") {
+                    if(!File.Exists(Utility.projectPath + parentModule)) {
+                        parentModule = "";
+                    }
+                }
             } else {
                 parentModule = "";
             }

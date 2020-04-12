@@ -307,7 +307,13 @@ export class {lExportName}Module {{ }}";
             } else {
                 Utility.setToAppModule("providers", lServicePath, lName);
             }
-            return $@"
+
+            string lEnvRelPath = new Uri(elementData_.path).MakeRelativeUri(new Uri(Utility.solutionPath + "/ClientApp/src/environments/environment")).ToString();
+            return $@"import {{ HttpClient,HttpHeaders }} from '@angular/common/http';
+import {{ Injectable }} from '@angular/core';
+import {{ Observable }} from 'rxjs';
+import {{ environment }} from '{lEnvRelPath}';
+
 @Injectable()
 export class {lName} {{
   private readonly controller = `${{environment.api}}{lRoute}`;

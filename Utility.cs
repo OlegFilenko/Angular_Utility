@@ -1,4 +1,5 @@
 ﻿using Angular_Utility.Dictionaries;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,23 +15,25 @@ namespace Angular_Utility {
         //=================================================== PRIVATE_VARIABLES ================================================>
         #region Private_Variables
 
-        private static string _projectPath = string.Empty;
+        private static string 
+            _projectPath = string.Empty,
+            _solutionPath = string.Empty;
 
         #endregion
         //=================================================== PUBLIC_VARIABLES =================================================>
         #region Public_Variables
 
-        //public static IReadOnlyDictionary<string, string> typeСonversionDict;
         public static string projectPath => _projectPath;
+        public static string solutionPath => _solutionPath;
 
         #endregion
         //====================================================| CONSTRUCTOR |===================================================>
         #region Cunstructor
 
         static Utility() {
-            _projectPath = File.ReadAllLines("Projects")[0];
+            _solutionPath = File.ReadAllLines("Projects")[0];
             ConsoleWriter.accentMessageLine(_projectPath);
-            _projectPath += "/ClientApp/src/app/";
+            _projectPath = _solutionPath + "/ClientApp/src/app/";
         }
 
         #endregion
@@ -100,6 +103,11 @@ namespace Angular_Utility {
         }
 
         //------------| FIND_SUBSTRING |-------------------------------------------------------------------------------------
+        public static string findSubstring(string source_, string start_, string end_, bool include_ = false) {
+            int lIndex = 0;
+            return findSubstring(source_, start_, end_, ref lIndex, include_);
+        }
+
         public static string findSubstring(string source_, string start_, string end_, ref int index_, bool include_ = false) {
             string lResult = "";
             index_ = source_.IndexOf(start_, index_);
@@ -114,55 +122,43 @@ namespace Angular_Utility {
             return lResult;
         }
 
-        //------------| SET_TO_APP_MODULE |-------------------------------------------------------------------------------------
+        //------------| SET_TO_MODULE |-------------------------------------------------------------------------------------
         public static void setToModule(string modulePath_, string setName_, string filePath_, string name_) {
-            if(!File.Exists(_projectPath + modulePath_)) {
+            if(!File.Exists(modulePath_)) {
                 ConsoleWriter.warnMessageLine($"ERROR. Module {modulePath_} not exists");
                 return;
             }
 
             string
-                lModuleContent = File.ReadAllText(projectPath + modulePath_),
-                lBlock = Regex.Match(lModuleContent, setName_ + "?[ ]*:?[ ]*[\\[][ \n\r\t:_{}a-z,]*[\\]]", RegexOptions.IgnoreCase).Value,
+                lModuleContent = addToImports(modulePath_, name_, filePath_, out bool alreadyExists),
+                lBlock = Regex.Match(lModuleContent, setName_ + "(\\s?)*:(\\s?)*[\\[][ \n\r\t:_{}a-z0-9,/'!.)(@-]*[\\]]", RegexOptions.IgnoreCase).Value,
                 lBlockEnd = Regex.Match(lModuleContent, "[\n\t\r ]*\\]").Value;
 
-            if (lBlock != "") {
-                string
-                    lInsert = string.Empty,
-                    lImportInserts = string.Empty;
-
-                string lImportPath = "./" + filePath_.Replace(projectPath, "");
-
+            if(lBlock != "") {
                 if(lBlock.IndexOf(name_) == -1) {
-                    lInsert = ",\n    " + name_;
-                    lImportInserts = $"import {{ {name_} }} from '{lImportPath}';";
+                    string
+                        lBlockStart = Regex.Match(lBlock, setName_ + "(\\s?)*:(\\s?)*[\\[]").Value,
+                        lBlockBody = findSubstring(lBlock, lBlockStart, lBlockEnd).TrimEnd();
+                    lModuleContent = lModuleContent.Replace(lBlockBody, lBlockBody + (lBlockBody.EndsWith(",")? "": ",") + "\n    " + name_);
                 } else {
-                    ConsoleWriter.warnMessageLine("Импорт с таким именем сервиса уже существует - " + name_);
-                }
-                if(lInsert != "") {
-                    string 
-                        lNewBlock = lBlock.Replace(lBlockEnd, lInsert + lBlockEnd),
-                        lImports = Regex.Match(lModuleContent, "import[ ]*{[a-z0-9}{'@/;\n\r\t,_ -.]*(export|@NgModule)", RegexOptions.IgnoreCase).Value,
-                        lNewImports;
-                    List<string> lAppModuleLines = new List<string>(lImports.Split('\n'));
-                    int lLastImportIndex = 0; 
-                    for (int i = 0; i < lAppModuleLines.Count; i++){
-                        string lLine = lAppModuleLines[i].Trim();
-                        if (Regex.IsMatch(lLine, "import(\\s?){[ a-z0-9,_-]+}(\\s?)from(\\s?)[./A-Za-z0-9\'-]*.service(\\s?)*(\'|\")(\\s?)*;", RegexOptions.IgnoreCase)) {
-                            lLastImportIndex = i;
-                        }
+                    if(alreadyExists) {
+                        return;
                     }
-                    lAppModuleLines.Insert(lLastImportIndex + 1, lImportInserts);
-                    lNewImports = string.Join("\n", lAppModuleLines.ToArray());
-                    lModuleContent = lModuleContent.Replace(lImports, lNewImports);
-                    lModuleContent = lModuleContent.Replace(lBlock, lNewBlock);
-                    File.WriteAllText(projectPath + modulePath_, lModuleContent);
                 }
+            } else {
+                int lLastSquareBracketIndex  = lModuleContent.LastIndexOf("]") + 1;
+                lModuleContent.Insert(lLastSquareBracketIndex, $@",
+  {setName_}: [
+    name_
+  ]
+");
             }
+
+            File.WriteAllText(modulePath_, lModuleContent);
         }
 
         public static void setToAppModule(string setName_, string filePath_, string name_) {
-            setToModule("app.module.ts", setName_, filePath_, name_);
+            setToModule(projectPath + "app.module.ts", setName_, filePath_, name_);
         }
 
         //------------| SET_ROUTE |-------------------------------------------------------------------------------------
@@ -194,6 +190,64 @@ namespace Angular_Utility {
         //------------| SET_TO_APP_ROUTING |-------------------------------------------------------------------------------------
         public static void setToAppRouting(string modulePath_, string routePrefix_ = "", string routeVar_ = "") {
             setRoute("app-routing.module.ts", modulePath_, "LayoutComponent", routePrefix_, routeVar_);
+        }
+
+        //------------| ADD_TO_IMPORTS |-------------------------------------------------------------------------------------
+        public static string addToImports(string filePath_, string importName_, string importPath_, out bool alreadyExists) {
+            alreadyExists = false;
+            if(File.Exists(filePath_)) {
+                Uri
+                    lFilePathUri = new Uri(filePath_),
+                    lImportPathUri = new Uri(importPath_);
+
+                string lImportRelativePath = lFilePathUri.MakeRelativeUri(lImportPathUri).ToString();
+                FileInfo lImportPathFileInfo = new FileInfo(lImportRelativePath);
+                lImportRelativePath = lImportRelativePath.Replace(lImportPathFileInfo.Name, Path.GetFileNameWithoutExtension(lImportRelativePath));
+
+                if(lImportRelativePath[0] != '.') { lImportRelativePath = "./" + lImportRelativePath; }
+
+                string lContent = File.ReadAllText(filePath_);
+                string lImportInsert = Regex.Match(lContent, $"import(\\s?)*{{[a-z0-9_, -] +}}(\\s?)*from(\\s?)*(\'|\")(\\s?)*({lImportRelativePath})(\\s?)*(\'|\")(\\s?)*;", RegexOptions.IgnoreCase).Value;
+
+                if(lImportInsert == "") {
+                    lImportInsert = $"import {{ {importName_} }} from '{lImportRelativePath}';";
+
+                    List<string> fileStringLines = new List<string>(lContent.Split('\n'));
+
+                    int lLastImportIndex = 0;
+                    for(int i = 0; i < fileStringLines.Count; i++) {
+                        string lLine = fileStringLines[i].Trim();
+                        if(Regex.IsMatch(lLine, "import[ }{*a-z0-9,_-]+from(\\s?)*(\'|\")[ @.,/a-z0-9_-]+(\'|\")(\\s?)*;", RegexOptions.IgnoreCase)) {
+                            lLastImportIndex = i;
+                        }
+                    }
+
+                    if(lLastImportIndex != 0) {
+                        lLastImportIndex += 1;
+                    }
+                    fileStringLines.Insert(lLastImportIndex, lImportInsert);
+                    lContent = string.Join("\n", fileStringLines.ToArray());
+                } else {
+                    if(lImportInsert == $"import {{ {importName_} }} from '{lImportRelativePath}';") { alreadyExists = true; return lContent; };
+                    string 
+                        lImportPart = findSubstring(lImportInsert, "import", "}").Trim(),
+                        lNewImportInsert = lImportInsert.Replace(lImportPart, lImportPart + $", {importName_}");
+                    lContent.Replace(lNewImportInsert, lNewImportInsert);
+                }
+                return lContent;
+            }
+            return "";
+        }
+
+        public static void addToImports(FileInfo filePath_, string importName_, string importPath_) {
+            if(File.Exists(projectPath + filePath_.FullName)) {
+                string lContent = addToImports(filePath_.FullName, importName_, importPath_, out bool alreadyExists );
+                if(!alreadyExists) {
+                    File.WriteAllText(projectPath + filePath_.FullName, lContent);
+                }
+            } else {
+                ConsoleWriter.warnMessageLine("ERROR! File not exists - " + projectPath + filePath_.FullName);
+            }
         }
 
         #endregion
