@@ -240,13 +240,13 @@ namespace Angular_Utility {
         }
 
         public static void addToImports(FileInfo filePath_, string importName_, string importPath_) {
-            if(File.Exists(projectPath + filePath_.FullName)) {
+            if(File.Exists(filePath_.FullName)) {
                 string lContent = addToImports(filePath_.FullName, importName_, importPath_, out bool alreadyExists );
                 if(!alreadyExists) {
-                    File.WriteAllText(projectPath + filePath_.FullName, lContent);
+                    File.WriteAllText(filePath_.FullName, lContent);
                 }
             } else {
-                ConsoleWriter.warnMessageLine("ERROR! File not exists - " + projectPath + filePath_.FullName);
+                ConsoleWriter.warnMessageLine("ERROR! File not exists - " + filePath_.FullName);
             }
         }
 
