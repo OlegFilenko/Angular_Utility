@@ -85,6 +85,9 @@ namespace Angular_Utility {
                 if(componentData_.type == NgComponent.page) {
                     Utility.setToAppRouting(componentData_.path + componentData_.name + ExtensionDict.value(NgElement.module));
                 }
+                if(componentData_.parentModule != "") {
+                    Utility.addToParent(componentData_.parentModule, componentData_.path + componentData_.name + ExtensionDict.value(NgElement.model));
+                }
             }
         }
 

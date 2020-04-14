@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Angular_Utility.Data {
 
@@ -58,11 +59,11 @@ namespace Angular_Utility.Data {
             path = Utility.projectPath + Utility.normalisePath(path, true);
 
             if(queryData_.dataDictionary.TryGetValue("parentModule", out string lParent)) {
-                parentModule = Utility.normalisePath(lParent);
-                if (parentModule != "auto") {
-                    if(!File.Exists(Utility.projectPath + parentModule)) {
+                if (lParent != "auto") {
+                    parentModule = Utility.projectPath + Utility.normalisePath(lParent);
+                    if(!Regex.IsMatch(parentModule, "^[a-z0-9._/:-]+(.module.ts)$", RegexOptions.IgnoreCase) || !File.Exists(parentModule)) {
                         parentModule = "";
-                    }
+                    } 
                 }
             } else {
                 parentModule = "";

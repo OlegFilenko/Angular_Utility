@@ -1,4 +1,5 @@
 ﻿using Angular_Utility.Dictionaries;
+using Angular_Utility.Enums;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -123,10 +124,10 @@ namespace Angular_Utility {
         }
 
         //------------| SET_TO_MODULE |-------------------------------------------------------------------------------------
-        public static void setToModule(string modulePath_, string setName_, string filePath_, string name_) {
+        public static string setToModule(string modulePath_, string setName_, string filePath_, string name_) {
             if(!File.Exists(modulePath_)) {
                 ConsoleWriter.warnMessageLine($"ERROR. Module {modulePath_} not exists");
-                return;
+                return "";
             }
 
             string
@@ -142,7 +143,7 @@ namespace Angular_Utility {
                     lModuleContent = lModuleContent.Replace(lBlockBody, lBlockBody + (lBlockBody.EndsWith(",")? "": ",") + "\n    " + name_);
                 } else {
                     if(alreadyExists) {
-                        return;
+                        return "";
                     }
                 }
             } else {
@@ -154,7 +155,14 @@ namespace Angular_Utility {
 ");
             }
 
-            File.WriteAllText(modulePath_, lModuleContent);
+            return lModuleContent;
+        }
+
+        public static void setToModule(FileInfo modulePath_, string setName_, string filePath_, string name_) {
+            string lModuleContent = setToModule(modulePath_.FullName, setName_, filePath_, name_);
+            if(lModuleContent != "") {
+                File.WriteAllText(modulePath_.FullName, lModuleContent);
+            }
         }
 
         public static void setToAppModule(string setName_, string filePath_, string name_) {
@@ -193,8 +201,8 @@ namespace Angular_Utility {
         }
 
         //------------| ADD_TO_IMPORTS |-------------------------------------------------------------------------------------
-        public static string addToImports(string filePath_, string importName_, string importPath_, out bool alreadyExists) {
-            alreadyExists = false;
+        public static string addToImports(string filePath_, string importName_, string importPath_, out bool alreadyExists_) {
+            alreadyExists_ = false;
             if(File.Exists(filePath_)) {
                 Uri
                     lFilePathUri = new Uri(filePath_),
@@ -228,7 +236,7 @@ namespace Angular_Utility {
                     fileStringLines.Insert(lLastImportIndex, lImportInsert);
                     lContent = string.Join("\n", fileStringLines.ToArray());
                 } else {
-                    if(lImportInsert == $"import {{ {importName_} }} from '{lImportRelativePath}';") { alreadyExists = true; return lContent; };
+                    if(lImportInsert == $"import {{ {importName_} }} from '{lImportRelativePath}';") { alreadyExists_ = true; return lContent; };
                     string 
                         lImportPart = findSubstring(lImportInsert, "import", "}").Trim(),
                         lNewImportInsert = lImportInsert.Replace(lImportPart, lImportPart + $", {importName_}");
@@ -237,6 +245,11 @@ namespace Angular_Utility {
                 return lContent;
             }
             return "";
+        }
+
+        public static string addToImports(string filePath_, string importPath_, out bool alreadyExists_) {
+            string lImportName = getExportName(Path.GetFileNameWithoutExtension(importPath_));
+            return addToImports(filePath_, lImportName, importPath_, out alreadyExists_);
         }
 
         public static void addToImports(FileInfo filePath_, string importName_, string importPath_) {
@@ -248,6 +261,30 @@ namespace Angular_Utility {
             } else {
                 ConsoleWriter.warnMessageLine("ERROR! File not exists - " + projectPath + filePath_.FullName);
             }
+        }
+
+        //------------| ADD_TO_PARENT |-------------------------------------------------------------------------------------
+        public static void addToParent(string parentModulePath_, string childPath_) {
+
+            string
+                lFileName = Path.GetFileNameWithoutExtension(childPath_),
+                lImportName = getExportName(lFileName),
+                lSetName = "";
+
+            if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.module))){ lSetName = "import"; } 
+            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.component))) { lSetName = "declarations"; } 
+            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.service))) { lSetName = "providers"; }
+
+            string lModuleContent = setToModule(parentModulePath_, lSetName, childPath_, lImportName);
+        }
+
+        #endregion
+        //===================================================== PRIVATE_METHODS ================================================>
+        #region Private_Methods
+
+        //------------| GET_ELEMENT_PATH_PATTERN |-------------------------------------------------------------------------------------
+        private static string _getElementPathPattern(NgElement ngElement_) {
+            return $"^[a-z]:/[ a-z0-9/_.-]+({ExtensionDict.value(ngElement_)})$";
         }
 
         #endregion
