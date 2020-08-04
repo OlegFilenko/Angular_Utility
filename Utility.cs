@@ -138,7 +138,7 @@ namespace Angular_Utility {
             if(lBlock != "") {
                 if(lBlock.IndexOf(name_) == -1) {
                     string
-                        lBlockStart = Regex.Match(lBlock, setName_ + "(\\s?)*:(\\s?)*[\\[]").Value,
+                        lBlockStart = Regex.Match(lBlock, setName_ + "(\\s)*:(\\s)*[\\[]").Value,
                         lBlockBody = findSubstring(lBlock, lBlockStart, lBlockEnd).TrimEnd();
                     lModuleContent = lModuleContent.Replace(lBlockBody, lBlockBody + (lBlockBody.EndsWith(",")? "": ",") + "\n    " + name_);
                 } else {
@@ -222,17 +222,16 @@ namespace Angular_Utility {
 
                     List<string> fileStringLines = new List<string>(lContent.Split('\n'));
 
-                    int lLastImportIndex = 0;
+                    int lLastImportIndex = -1;
                     for(int i = 0; i < fileStringLines.Count; i++) {
                         string lLine = fileStringLines[i].Trim();
-                        if(Regex.IsMatch(lLine, "import[ }{*a-z0-9,_-]+from(\\s?)*(\'|\")[ @.,/a-z0-9_-]+(\'|\")(\\s?)*;", RegexOptions.IgnoreCase)) {
+                        if(Regex.IsMatch(lLine, "import(\\s)*{[ *a-z0-9,_-]+}(\\s)*from(\\s)*(\'|\")[ @.,/a-z0-9_-]+(\'|\")(\\s)*;", RegexOptions.IgnoreCase)) {
                             lLastImportIndex = i;
                         }
                     }
 
-                    if(lLastImportIndex != 0) {
-                        lLastImportIndex += 1;
-                    }
+                    lLastImportIndex += 1;
+
                     fileStringLines.Insert(lLastImportIndex, lImportInsert);
                     lContent = string.Join("\n", fileStringLines.ToArray());
                 } else {
@@ -264,18 +263,140 @@ namespace Angular_Utility {
         }
 
         //------------| ADD_TO_PARENT |-------------------------------------------------------------------------------------
-        public static void addToParent(string parentModulePath_, string childPath_) {
+        public static void addToParent(string parentModulePath_, string childPath_, NgComponent childType_ = NgComponent.component) {
 
             string
                 lFileName = Path.GetFileNameWithoutExtension(childPath_),
                 lImportName = getExportName(lFileName),
                 lSetName = "";
 
-            if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.module))){ lSetName = "import"; } 
-            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.component))) { lSetName = "declarations"; } 
-            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.service))) { lSetName = "providers"; }
+            if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.module), RegexOptions.IgnoreCase)){ lSetName = "imports"; } 
+            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.component), RegexOptions.IgnoreCase)) { lSetName = "declarations"; } 
+            else if(Regex.IsMatch(childPath_, _getElementPathPattern(NgElement.service), RegexOptions.IgnoreCase)) { lSetName = "providers"; }
 
-            string lModuleContent = setToModule(parentModulePath_, lSetName, childPath_, lImportName);
+            string
+                lModuleContent = setToModule(parentModulePath_, lSetName, childPath_, lImportName),
+                lDeclarationsBlock = Regex.Match(lModuleContent, "declarations(\\s)*:(\\s)*[\\[]([ \r\t\na-z0-9,]*)[\\]]", RegexOptions.IgnoreCase).Value;
+
+            File.WriteAllText(parentModulePath_, lModuleContent);
+
+            if(lSetName == "imports" && (childType_ == NgComponent.dialog)) {
+                if(lDeclarationsBlock != "") {
+                    string lComponentName = findSubstring(lDeclarationsBlock, Regex.Match(lModuleContent, "declarations(\\s)*:(\\s)*[\\[]", RegexOptions.IgnoreCase).Value, "]").Split(',')[0].Trim();
+
+                    if(lComponentName == "") { return; }
+                    string lComponentPath = getImportPath(lModuleContent, lComponentName);
+                    if(lComponentPath != "") { lComponentPath += ".ts"; } else { return; }
+
+                    lComponentPath = Path.GetFullPath(Path.Combine(new FileInfo(parentModulePath_).DirectoryName, lComponentPath));
+                    string 
+                        lComponentImportPathFullName = Path.GetDirectoryName(childPath_)+ "\\" + Path.GetFileName(childPath_).Replace(ExtensionDict.value(NgElement.module), ExtensionDict.value(NgElement.component)),
+                        lComponentExportName = getExportName(Path.GetFileNameWithoutExtension(lComponentImportPathFullName)),
+                        lComponentContent = addToImports(lComponentPath, lComponentExportName, lComponentImportPathFullName, out bool lAlreadyExists);
+
+                    switch(childType_) {
+                        case NgComponent.dialog: {
+                                File.WriteAllText(lComponentPath, inject(lComponentContent, new string[] { "private readonly dialog: MatDialog" }));
+                            break;
+                            }
+                    }
+
+                }
+            }
+        }
+
+        //------------| PARENT_MODULE_PATH |-------------------------------------------------------------------------------------
+        public static string parentModulePath(string filePath_) {
+            string[] lFiles;
+            bool lGotcha = false;
+            string 
+                lModule = ExtensionDict.value(NgElement.module),
+                lProjPath = Path.GetDirectoryName(projectPath);
+            filePath_ = Path.GetDirectoryName(filePath_);
+            do {
+                filePath_ = Path.GetDirectoryName(filePath_);
+                lFiles = Directory.GetFiles(filePath_);
+                for(int i = 0; i < lFiles.Length; i++) {
+                    if(Regex.IsMatch(lFiles[i], "(" + lModule + ")$")) {
+                        if(!Regex.IsMatch(lFiles[i], "(-routing" + lModule + ")$")) {
+                            filePath_ = normalisePath(lFiles[i]);
+                            lGotcha = true;
+                            break;
+                        }
+                    }
+                }
+            } while(!lGotcha && projectPath != filePath_ && filePath_.Length > 5);
+
+            if(lGotcha) {
+                return filePath_;
+            } else {
+                return "";
+            }
+        }
+
+        //------------| GET_IMPORT_PATH |-------------------------------------------------------------------------------------
+        public static string getImportPath(string source_, string name_) {
+            string 
+                lPath = "",
+                lImportLine = "";
+
+            string[] lElementLines = source_.Split('\n');
+
+            for(int i = 0; i < lElementLines.Length; i++) {
+                string lLine = lElementLines[i];
+                if(Regex.IsMatch(lLine, "import(\\s)*[{](\\s)*(" + name_ + ")[ a-z0-9,]+[}](\\s)*(from)(\\s)*(\'|\")[ @a-z./_-]*(\'|\")(\\s)*;")) {
+                    lImportLine = lLine;
+                    break;
+                }
+            }
+
+            if(lImportLine == "") { return ""; }
+
+            lPath = findSubstring(
+                lImportLine,
+                Regex.Match(lImportLine, "from(\\s)*(\'|\")").Value,
+                Regex.Match(lImportLine, "(\'|\")(\\s)*;").Value
+            );
+
+            return lPath;
+        }
+
+        //------------| INJECT |-------------------------------------------------------------------------------------
+        public static string inject(string classContent_, params string[] injections_) {
+            int lIndex1 = classContent_.IndexOf("constructor");
+
+            List<string> lCheckedInjections = new List<string>();
+            string lInjection = "";
+            for(int i = 0; i < injections_.Length; i++) {
+                lInjection = injections_[i];
+                if(classContent_.IndexOf("    " + lInjection) == -1) {
+                    lCheckedInjections.Add(lInjection);
+                }
+            }
+            injections_ = lCheckedInjections.ToArray();
+
+            string lNewConstructorString = $@"constructor(
+    {string.Join("\n    ", injections_)}
+  )";
+            if(lIndex1 != -1) {
+                int lIndex2 = lIndex1;
+                string lContructorArguments = findSubstring(classContent_, Regex.Match(classContent_, "(constructor)(\\s)*[(]").Value, ")", ref lIndex2).TrimEnd();
+                if(lContructorArguments != "") {
+                    classContent_ = classContent_.Replace(lContructorArguments, lContructorArguments + ", \n" + string.Join("\n    ", injections_) + "\n");
+                } else {
+                    lIndex2 = lIndex1;
+                    lContructorArguments = findSubstring(classContent_, Regex.Match(classContent_, "(constructor)(\\s)*[(]").Value, ")", ref lIndex2, true).TrimEnd();
+                    classContent_ = classContent_.Replace(lContructorArguments, lNewConstructorString);
+                }
+            } else {
+                int lInsertIndex = classContent_.IndexOf(Regex.Match(classContent_, "  [_a-z0-9]+(\\s)*[(]([_a-z0-9: ]*)[)][:a-z0-9\\s\t\n]*[{]", RegexOptions.IgnoreCase).Value);
+                if(lInsertIndex != -1) {
+                    classContent_ = classContent_.Insert(lInsertIndex, "  " + lNewConstructorString + " { }\n\n");
+                } else {
+                    //======> ToDo 
+                }
+            }
+            return classContent_;
         }
 
         #endregion

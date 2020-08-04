@@ -72,6 +72,7 @@ namespace Angular_Utility.Data {
                 lExtends = "",
                 lImplements = "implements OnInit",
                 lConstructorBody = "",
+                lComponentBody = "",
                 lOnInit = "",
                 lVariables = "",
                 lComponentDecorator = "",
@@ -85,12 +86,16 @@ namespace Angular_Utility.Data {
                     GenerateComponentData lComponentData = data_ as GenerateComponentData;
                     isAbstract = (lComponentData.type == NgComponent.abstr);
 
+                    if(lComponentData.type == NgComponent.component) {
+                        lAngularCore = ", OnInit";
+                    }
+
                     if(lComponentData.type == NgComponent.dialog) {
                         lAngularCore = ", Injector, Inject";
                         lExtends = "extends DialogAbstractDefaultsComponent";
                         lInjections = "\n    @Inject(MAT_DIALOG_DATA) protected defaults: any,\n    protected readonly injector: Injector";
                         lConstructorBody = "\n    super(defaults, injector);";
-                        lOnInit = "\n    super.ngOnInit()";
+                        lOnInit = "\n    super.ngOnInit();";
                         lVariables = "  icon: string = 'info';\n  title: string = 'Инфо';";
                         lImports = "\nimport { MAT_DIALOG_DATA } from '@angular/material';\nimport { DialogAbstractDefaultsComponent } from 'app/shared/dialog-window/dialog-abstract-defaults.component';";
                         lImplements = "";
@@ -100,6 +105,43 @@ namespace Angular_Utility.Data {
                         lAngularCore = ", OnInit";
                         lImplements = " implements OnInit";
                         lVariables = "  readonly modelStringKey: string;";
+                    }
+
+                    if(lComponentData.type == NgComponent.table || lComponentData.type == NgComponent.tableAPI || lComponentData.type == NgComponent.tableClient) {
+                        lImplements = "";
+                        lImports = "\nimport { ListColumn } from 'app/shared/list/list-column.model';";
+                        lAngularCore = ", Injector";
+                        lInjections = "\n    protected readonly injector: Injector";
+                        lConstructorBody = "\n    super(injector);";
+                        lOnInit = $@"
+    this.columns = [
+
+    ] as ListColumn[];
+    super.ngOnInit();";
+                        lComponentBody = $@"
+  load() {{
+    super.load();
+
+  }}
+
+  add() {{
+  }}
+";
+                    }
+
+                    if(lComponentData.type == NgComponent.table) {
+                        lExtends = "extends AbstractTableComponent";
+                        lImports += "\nimport { AbstractTableComponent } from 'app/shared/table/abstract-table.component';";
+                    }
+
+                    if(lComponentData.type == NgComponent.tableAPI) {
+                        lExtends = "extends AbstractTableApiPaginatorComponent";
+                        lImports += "\nimport { AbstractTableApiPaginatorComponent } from 'app/shared/table/abstract-table-api-paginator.component';";
+                    }
+
+                    if(lComponentData.type == NgComponent.tableClient) {
+                        lExtends = "extends AbstractTableClientPaginatorComponent";
+                        lImports += "\nimport { AbstractTableClientPaginatorComponent } from 'app/shared/table/abstract-table-client-paginator.component';";
                     }
 
                     lComponentDecorator = (!isAbstract) ? $@"@Component({{
@@ -122,7 +164,7 @@ export class {lExportName}Component {lExtends}{lImplements} {{
 
   ngOnInit() {{{lOnInit}
   }}
-
+{lComponentBody}
 }}";
         }
 
@@ -158,11 +200,29 @@ import {{ DialogWindowModule }} from 'app/shared/dialog-window/dialog-window.mod
                     }
 
                     if(lComponentData.type == NgComponent.page) {
+                        lImports += $@"
+import {{ {lExportName}RoutingModule }} from './{lName}-routing.module';";
+                        lModuleImports = $@",
+    {lExportName}RoutingModule";
+                    }
+
+                    if(lComponentData.type == NgComponent.table || lComponentData.type == NgComponent.tableAPI || lComponentData.type == NgComponent.tableClient) {
+                        lImports += $@"
+import {{ ListModule }} from 'app/shared/list/list.module';
+import {{ MaterialModule }} from 'app/shared/material-components.module';
+import {{ FlexLayoutModule }} from '@angular/flex-layout';
+import {{ TableColumnModule }} from 'app/shared/table/table-column/table-column.module';";
+                        lModuleImports = $@",
+    ListModule,
+    MaterialModule,
+    FlexLayoutModule,
+    TableColumnModule
+";
                     }
                 }
                 if(data_.GetType().Name == GENERATE_DIRECTIVE_DATA_NAME) {
                     GenerateDirectiveData lDirectiveData = data_ as GenerateDirectiveData;
-                    lImports = $@"
+                    lImports += $@"
 import {{ {lExportName}Directive }} from './{lName}.directive';";
 
                     lParams = $@",
@@ -191,6 +251,66 @@ export class {lExportName}Module {{ }}";
                     if(lComponentData.type == NgComponent.dialog) {
                         return @"<dialog-window icon='{{icon}}' title='{{title}}' (closeButtonClick)='close()'>
 </dialog-window>";
+                    }
+
+                    if(lComponentData.type == NgComponent.table || lComponentData.type == NgComponent.tableAPI || lComponentData.type == NgComponent.tableClient) {
+                        string lPaginator = "";
+
+                        if(lComponentData.type == NgComponent.tableAPI) {
+                            lPaginator = @"
+    <!--Paginator-->
+    <div class='server-paginator' fxLayout='row' fxLayoutAlign='end center'>
+      <div fxLayout='row' fxLayoutAlign='center center' fxLayoutGap='10px'>
+        <span>Записей на страницу: </span>
+        <mat-select [(ngModel)]='filters.rowsOnPage' name='item' fxFlex='45px' (selectionChange)='onRowsOnPageChange($event.value)'>
+          <mat-option *ngFor='let item of itemsOnPage' [(value)]='item.id'>
+            {{item.name}}
+          </mat-option>
+        </mat-select>
+      </div>
+      <div class='items-previouse-page'>
+        <button class='mat-paginator-navigation-previous mat-icon-button' mat-icon-button='' type='button' (click)='getPreviousePage()'>
+          <mat-icon>keyboard_arrow_left</mat-icon>
+        </button>
+      </div>
+      Страница: {{pageNumber}} | Записи: {{rowsCountFrom}} - {{maxRowNumOnPage}} из {{rowsCountAll}}
+      <div class='items-next-page'>
+        <button class='mat-paginator-navigation-next mat-icon-button' mat-icon-button='' type='button' (click)='getNextPage()'>
+          <mat-icon>keyboard_arrow_right</mat-icon>
+        </button>
+      </div>
+    </div>";
+                        }
+
+                        if(lComponentData.type == NgComponent.tableClient) {
+                            lPaginator = @"
+    <!-- paginator -->
+    <mat-paginator #paginator
+                   [length]='dataSource.data.length'
+                   [pageIndex]='0'
+                   [pageSize]='pageSize'
+                   [pageSizeOptions]='[5, 10, 20, 50, 100]'>
+    </mat-paginator>";
+                        }
+
+                        return $@"
+<div class='elevation border-radius overflow-hidden route-animations-elements'>
+  <fury-list [columns]='columns'
+             (clickAdd)='add()'
+             name='table name'
+             nameFieldWidth='250px'>
+    <mat-table #table [dataSource]='dataSource' matSort>
+
+      <ng-container *ngFor='let column of columns'>
+        <table-column *ngIf='column.isModelProperty' [column]='column'>
+        </table-column >
+      </ng-container >
+
+      <mat-header-row *matHeaderRowDef='visibleColumns'></mat-header-row>
+      <mat-row *matRowDef= 'let row; columns: visibleColumns;' class='table-row'></mat-row>
+    </mat-table>{lPaginator}
+  </fury-list>
+</div>";
                     }
                 }
             }
@@ -320,8 +440,12 @@ export class {lName} {{
 
   constructor(private readonly http: HttpClient) {{ }}
 
-  private getHttpOptions(modelStringKey: string) {{
-    return {{ headers: new HttpHeaders({{ 'ModelStringKey': modelStringKey }}) }};
+  private getHttpOptions(modelStringKey: string, moduleId?: number) {{
+    if (moduleId) {{
+      return {{ headers: new HttpHeaders({{ 'ModelStringKey': modelStringKey, 'ModuleId': `${{moduleId}}` }}) }};
+    }} else {{
+      return {{ headers: new HttpHeaders({{ 'ModelStringKey': modelStringKey }}) }};
+    }}
   }}
     
 {lServiceMethods}

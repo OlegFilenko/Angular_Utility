@@ -59,11 +59,13 @@ namespace Angular_Utility.Data {
             path = Utility.projectPath + Utility.normalisePath(path, true);
 
             if(queryData_.dataDictionary.TryGetValue("parentModule", out string lParent)) {
-                if (lParent != "auto") {
+                if(lParent != "auto" && lParent != "unset") {
                     parentModule = Utility.projectPath + Utility.normalisePath(lParent);
                     if(!Regex.IsMatch(parentModule, "^[a-z0-9._/:-]+(.module.ts)$", RegexOptions.IgnoreCase) || !File.Exists(parentModule)) {
                         parentModule = "";
-                    } 
+                    }
+                } else {
+                    parentModule = lParent;
                 }
             } else {
                 parentModule = "";
@@ -71,8 +73,8 @@ namespace Angular_Utility.Data {
 
             if(queryData_.dataDictionary.TryGetValue("type", out string lType)) {
                 type = (NgComponent)Enum.Parse(typeof(NgComponent), lType);
-                if(type == NgComponent.dialog && parentModule != "") {
-                    Utility.setToModule(parentModule, "imports", path, name);
+                if(type == NgComponent.dialog && parentModule == "") {
+                    parentModule = "auto";
                 }
             } else {
                 type = NgComponent.component;

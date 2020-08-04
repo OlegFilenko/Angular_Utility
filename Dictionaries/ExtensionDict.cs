@@ -12,7 +12,6 @@ namespace Angular_Utility.Dictionaries {
         #region Constructor
 
         static ExtensionDict() {
-            System.Console.WriteLine("ExtensionDict");
             _dict = new ReadonlyDict<NgElement, string>(
                 new (NgElement, string)[] {
                     (NgElement.component, ".component.ts"),

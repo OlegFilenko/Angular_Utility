@@ -13,7 +13,9 @@
         static TypeСonversionDict() {
             string
                 STRING = "string",
-                NUMBER = "number";
+                NUMBER = "number",
+                BOOLEAN = "boolean",
+                DATE = "Date";
 
             _dict = new ReadonlyDict<string, string>(
                 new (string, string)[] {
@@ -23,16 +25,16 @@
                 ("byte", NUMBER),
                 ("int", NUMBER),
                 ("long", NUMBER),
-                ("Boolean", "boolean"),
-                ("DateTime", "Date"),
+                ("bool", BOOLEAN),
+                ("DateTime", DATE),
                 ("string?", STRING),
                 ("Guid?",STRING),
                 ("short?", NUMBER),
                 ("byte?", NUMBER),
                 ("int?", NUMBER),
                 ("long?", NUMBER),
-                ("Boolean?", "boolean"),
-                ("DateTime?", "Date"),
+                ("bool?", BOOLEAN),
+                ("DateTime?", DATE),
             });
 
         }

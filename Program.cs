@@ -85,8 +85,12 @@ namespace Angular_Utility {
                 if(componentData_.type == NgComponent.page) {
                     Utility.setToAppRouting(componentData_.path + componentData_.name + ExtensionDict.value(NgElement.module));
                 }
-                if(componentData_.parentModule != "") {
-                    Utility.addToParent(componentData_.parentModule, componentData_.path + componentData_.name + ExtensionDict.value(NgElement.model));
+                if(componentData_.parentModule != "" && componentData_.parentModule != "unset") {
+                    if(componentData_.parentModule != "auto") {
+                        Utility.addToParent(componentData_.parentModule, componentData_.path + componentData_.name + ExtensionDict.value(NgElement.module), componentData_.type);
+                    } else {
+                        Utility.addToParent(Utility.parentModulePath(componentData_.path), componentData_.path + componentData_.name + ExtensionDict.value(NgElement.module), componentData_.type);
+                    }
                 }
             }
         }

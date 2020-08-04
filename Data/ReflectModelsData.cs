@@ -13,7 +13,8 @@ namespace Angular_Utility.Data {
 
         public readonly string
             pathFrom,
-            pathTo;
+            pathTo,
+            namePattern;
 
         public bool isValid => _isValid;
 
@@ -41,6 +42,8 @@ namespace Angular_Utility.Data {
             pathFrom = Utility.normalisePath(pathFrom);
             pathTo = Utility.normalisePath(pathTo, true);
 
+            namePattern = queryData_.getValue("namePattern");
+
             if(!Directory.Exists(pathFrom)) {
                 if(!File.Exists(pathFrom)) {
                     ConsoleWriter.warnMessageLine("Incorrect source path");
@@ -50,7 +53,11 @@ namespace Angular_Utility.Data {
                     filePathArray = new string[] { pathFrom };
                 }
             } else {
-                filePathArray = Directory.GetFiles(pathFrom);
+                if(namePattern == null) {
+                    filePathArray = Directory.GetFiles(pathFrom);
+                } else {
+                    filePathArray = Directory.GetFiles(pathFrom, namePattern);
+                }
             }
         }
 
